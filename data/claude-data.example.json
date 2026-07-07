@@ -1,0 +1,32 @@
+{
+  "generatedAt": "2026-07-07T06:00:00+02:00",
+  "notion": {
+    "tasks": [
+      "Godkjenne annonsebudsjett for Klient A",
+      "Ringe leverandør om levering",
+      "Forberede ukesrapport"
+    ]
+  },
+  "worldStage": {
+    "headlines": [
+      { "title": "OpenAI announces new model update", "category": "AI", "lat": 37.77, "lng": -122.42 },
+      { "title": "European markets rally on rate news", "category": "Finance", "lat": 51.51, "lng": -0.13 },
+      { "title": "Major earthquake reported in Asia-Pacific region", "category": "World", "lat": 35.68, "lng": 139.69 }
+    ],
+    "markets": {
+      "sp500": { "value": 5540.32, "changePercent": 0.6 },
+      "gold": { "value": 2415.8, "changePercent": -0.2 },
+      "silver": { "value": 30.42, "changePercent": 1.1 },
+      "bitcoin": { "value": 68210, "changePercent": 2.4 }
+    }
+  },
+  "gmail": {
+    "urgent": [
+      {
+        "from": "Ola Nordmann",
+        "subject": "Haster: Kontraktsfrist i morgen",
+        "reason": "Krever signatur innen 24 timer"
+      }
+    ]
+  }
+}

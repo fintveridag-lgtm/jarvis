@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jarvis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<div id="dimmer"></div>
+
+<header class="topbar">
+  <img src="/assets/norse-logo.svg" alt="Norse" class="logo" />
+</header>
+
+<main class="grid">
+  <section class="col col-left">
+    <article class="box" id="box-instagram" data-box="instagram">
+      <header><h2>Instagram</h2><span class="sub">Siste 7 dager</span></header>
+      <div class="box-content" data-content="instagram"><p class="empty">Laster…</p></div>
+    </article>
+    <article class="box" id="box-metaads" data-box="metaads">
+      <header><h2>Meta-annonser</h2><span class="sub">Siste 7 dager</span></header>
+      <div class="box-content" data-content="metaads"><p class="empty">Laster…</p></div>
+    </article>
+    <article class="box" id="box-clientperf" data-box="clientperf">
+      <header><h2>Klient-ytelse</h2><span class="sub">Måned hittil</span></header>
+      <div class="box-content" data-content="clientperf"><p class="empty">Laster…</p></div>
+    </article>
+  </section>
+
+  <div class="orb-wrap">
+    <canvas id="orbCanvas"></canvas>
+  </div>
+
+  <section class="col col-right">
+    <article class="box" id="box-notion" data-box="notion">
+      <header><h2>Notion — I dag</h2><span class="sub">Today</span></header>
+      <div class="box-content" data-content="notion"><p class="empty">Kjør morgenrutinen for å hente dagens oppgaver fra Notion.</p></div>
+    </article>
+    <article class="box" id="box-worldstage" data-box="worldstage">
+      <header><h2>World Stage</h2><span class="sub">Nyheter &amp; markeder</span></header>
+      <div class="box-content" data-content="worldstage"><p class="empty">Kjør morgenrutinen for å hente nyheter og markedspriser.</p></div>
+    </article>
+    <article class="box" id="box-gmail" data-box="gmail">
+      <header><h2>Hastesaker — Gmail</h2><span class="sub">Innboks</span></header>
+      <div class="box-content" data-content="gmail"><p class="empty">Kjør morgenrutinen for å hente e-post.</p></div>
+    </article>
+  </section>
+</main>
+
+<div id="overlayPanel" class="overlay hidden" aria-hidden="true"></div>
+
+<footer class="bottombar">
+  <button id="runBriefBtn" class="run-brief-btn">▶ Run brief</button>
+  <div id="statusLine" class="status-line">Klar. Cmd+J for stemme, Cmd+Shift+J for direkte brief.</div>
+</footer>
+
+<audio id="briefAudio" preload="auto"></audio>
+
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>

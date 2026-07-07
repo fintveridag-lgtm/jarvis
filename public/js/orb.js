@@ -53,6 +53,10 @@ float angDist(float a, float b) {
   return abs(d);
 }
 
+float hash(float n) {
+  return fract(sin(n * 127.1) * 43758.5453);
+}
+
 void main() {
   vec2 uv = (gl_FragCoord.xy / uResolution) * 2.0 - 1.0;
   uv.x *= uResolution.x / uResolution.y;
@@ -175,12 +179,56 @@ void main() {
     alpha = max(alpha, max(nodeRing, nodeFill * 0.9));
   }
 
+  // ================= LAYERED BROKEN ARCS =================
+  // many pseudo-random dashed arc layers at scattered radii, mixed
+  // cyan/white/orange, rotating at different speeds — the dense
+  // "technical layering" of the reference art
+  for (int i = 0; i < 10; i++) {
+    float fi = float(i);
+    float ri = 0.14 + 0.76 * fract(fi / 10.0 + hash(fi * 7.31) * 0.6);
+    float th = mix(0.0025, 0.009, hash(fi * 3.7)) + step(0.85, hash(fi * 11.3)) * 0.012;
+    float segs = floor(mix(2.0, 22.0, hash(fi * 5.7)));
+    float fill = mix(0.35, 0.92, hash(fi * 9.2));
+    float spin = (hash(fi * 4.4) - 0.5) * 0.10 * uTime;
+    float m = dashes(aN, segs, fill, spin) * ringLine(r, ri, th, ww);
+    float ch = hash(fi * 6.6);
+    vec3 c = ch < 0.42 ? CYAN : (ch < 0.72 ? mix(ICE, vec3(1.0), 0.5) : ORANGE);
+    float it = mix(0.35, 1.0, hash(fi * 8.8)) * (0.8 + uLevel * 0.8);
+    color += c * m * it * (0.55 + depth * 0.45);
+    alpha = max(alpha, m * min(it, 1.0) * 0.85);
+  }
+
+  // ================= DIGITAL DATA BLOCKS =================
+  // flickering block-grid wedges that read as streams of tiny data text
+  float wedge = smoothstep(0.62, 0.22, angDist(aN, 2.35))
+              + smoothstep(0.62, 0.22, angDist(aN, 5.55));
+  float cu = floor(aN * 22.0);
+  float cv = floor(r * 56.0);
+  float on = step(0.52, hash(cu * 13.7 + cv * 7.9 + floor(uTime * 2.0) * 0.618));
+  float bx = step(0.18, fract(aN * 22.0)) * (1.0 - step(0.82, fract(aN * 22.0)));
+  float by = step(0.15, fract(r * 56.0)) * (1.0 - step(0.75, fract(r * 56.0)));
+  float dataMask = on * bx * by * bandMask(r, 0.56, 0.87, ww) * wedge;
+  color += mix(CYAN, ICE, 0.4) * dataMask * 0.40;
+  alpha = max(alpha, dataMask * 0.45);
+
+  // ================= ASYMMETRIC AMBIENT BLOOMS =================
+  // big soft light fields: icy bloom upper-left, warm orange bloom right
+  vec2 pnb = uv / pulse;
+  vec2 dL = pnb - vec2(-0.34, 0.30);
+  float bloomL = exp(-dot(dL, dL) * 6.5) * (0.40 + uLevel * 0.7);
+  color += mix(ICE, vec3(1.0), 0.3) * bloomL;
+  alpha = max(alpha, bloomL * 0.55);
+  vec2 dR = pnb - vec2(0.56, 0.10);
+  float bloomR = exp(-dot(dR, dR) * 14.0) * (0.85 + uBass * 0.8 + uLevel * 0.5);
+  color += mix(ORANGE, vec3(1.0, 0.78, 0.45), 0.45) * bloomR;
+  alpha = max(alpha, bloomR * 0.6);
+
   // ================= ENERGY & DATA DETAILS =================
-  // broad orange energy sector sweeping slowly around the ring zone
+  // orange energy glint sweeping slowly around the ring zone
   float sectorD = angDist(aN, uTime * 0.07);
-  float sector = exp(-pow(sectorD / 0.85, 2.0)) * bandMask(r, 0.38, 0.86, 0.04);
-  color += ORANGE * sector * (0.30 + uLevel * 0.35 + uBass * 0.25);
-  alpha = max(alpha, sector * 0.5);
+  float sector = exp(-pow(sectorD / 0.45, 2.0)) * bandMask(r, 0.40, 0.80, 0.04);
+  color += mix(ORANGE, vec3(1.0, 0.7, 0.35), 0.3) * sector * (0.35 + uLevel * 0.4 + uBass * 0.3);
+  alpha = max(alpha, sector * 0.45);
 
   // long bright cyan arcs just outside the white ring
   float arcs = dashes(aN, 3.0, 0.82, uTime * 0.016) * ringLine(r, 0.585, 0.0045, ww);

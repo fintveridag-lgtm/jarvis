@@ -1,10 +1,12 @@
 import { createOrb } from './orb.js';
 import { ensureAnalyser, resumeAudioContext, getAudioLevels } from './audio-analyser.js';
 import { showBox, hideBox, currentBox } from './overlay.js';
+import { initPlanets, updatePlanets } from './planets.js';
 import './speech.js';
 
 const canvas = document.getElementById('orbCanvas');
 const orb = createOrb(canvas);
+initPlanets(document.querySelector('.orb-wrap'));
 const audio = document.getElementById('briefAudio');
 const runBtn = document.getElementById('runBriefBtn');
 const statusLine = document.getElementById('statusLine');
@@ -337,6 +339,7 @@ function frame(now) {
   }
 
   orb.render(t, level, bass, treble);
+  updatePlanets(t);
   requestAnimationFrame(frame);
 }
 

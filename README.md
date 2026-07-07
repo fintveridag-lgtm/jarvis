@@ -109,6 +109,31 @@ som en planlagt jobb (cron/launchd/agent-trigger) hver morgen. Dashbordet
 fungerer fullt ut selv om denne aldri har kjørt — de tre boksene viser da en
 "kjør morgenrutinen"-tilstand.
 
+## Planeter rundt orben
+
+Små klikkbare planeter roterer rundt orbens ytterskall:
+
+- **Vær-planeten** (cyan) viser været i Ålesund. Hentes live fra
+  [Open-Meteo](https://open-meteo.com) — gratis og uten API-nøkkel.
+- **Konto-planeten** (oransje) viser saldo. Banker tilbyr ikke enkel
+  API-tilgang for privatpersoner, så tallene leses fra feltet `account`
+  i `data/claude-data.json`. Legg inn f.eks.:
+
+  ```json
+  "account": {
+    "currency": "kr",
+    "accounts": [
+      { "name": "Brukskonto", "balance": 12345 },
+      { "name": "Sparekonto", "balance": 50000 }
+    ],
+    "updated": "2026-07-07"
+  }
+  ```
+
+Hold musen over en planet for infokortet; klikk for å feste det. Flere
+planeter legges til i `PLANETS`-lista i `public/js/planets.js` pluss et
+`/api/planets/<id>`-endepunkt i `server.js`.
+
 ## Logo
 
 `public/assets/norse-logo.svg` er en plassholder (hvit "NORSE"-tekst i

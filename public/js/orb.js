@@ -47,6 +47,12 @@ float dashes(float a, float n, float fill, float spin) {
   return step(fract(a / TAU * n + spin), fill);
 }
 
+// shortest angular distance between two angles
+float angDist(float a, float b) {
+  float d = mod(a - b + PI, TAU) - PI;
+  return abs(d);
+}
+
 void main() {
   vec2 uv = (gl_FragCoord.xy / uResolution) * 2.0 - 1.0;
   uv.x *= uResolution.x / uResolution.y;
@@ -168,6 +174,45 @@ void main() {
     color += mix(vec3(1.0), ICE, 0.35) * nodeRing * (0.85 + uLevel * 1.2 + uTreble * 0.5);
     alpha = max(alpha, max(nodeRing, nodeFill * 0.9));
   }
+
+  // ================= ENERGY & DATA DETAILS =================
+  // broad orange energy sector sweeping slowly around the ring zone
+  float sectorD = angDist(aN, uTime * 0.07);
+  float sector = exp(-pow(sectorD / 0.85, 2.0)) * bandMask(r, 0.38, 0.86, 0.04);
+  color += ORANGE * sector * (0.30 + uLevel * 0.35 + uBass * 0.25);
+  alpha = max(alpha, sector * 0.5);
+
+  // long bright cyan arcs just outside the white ring
+  float arcs = dashes(aN, 3.0, 0.82, uTime * 0.016) * ringLine(r, 0.585, 0.0045, ww);
+  color += mix(CYAN, ICE, 0.5) * arcs * (1.1 + uLevel * 0.6);
+  alpha = max(alpha, arcs * 0.9);
+
+  // fine cyan data ring + sparse orange dashes in the bezel
+  float data1 = dashes(aN, 48.0, 0.55, -uTime * 0.02) * ringLine(r, 0.705, 0.004, ww);
+  color += CYAN * data1 * 0.8;
+  alpha = max(alpha, data1 * 0.85);
+  float data2 = dashes(aN, 10.0, 0.35, uTime * 0.03) * ringLine(r, 0.755, 0.007, ww);
+  color += ORANGE * data2 * (0.75 + uLevel * 0.5);
+  alpha = max(alpha, data2 * 0.85);
+
+  // thin radial spokes across the bezel, like HUD grid lines
+  float spokeFrac = abs(fract(aN / TAU * 16.0) - 0.5);
+  float spokeMask = smoothstep(0.035, 0.01, spokeFrac) * bandMask(r, 0.58, 0.85, ww);
+  color += mix(CYAN, vec3(1.0), 0.3) * spokeMask * 0.16;
+  alpha = max(alpha, spokeMask * 0.28);
+
+  // traveling lens-flare hotspots (one icy on the white ring, one orange in the bezel)
+  vec2 pn = uv / pulse;
+  float hsA1 = uTime * 0.12;
+  vec2 hs1 = vec2(cos(hsA1), sin(hsA1)) * 0.475;
+  float g1 = exp(-dot(pn - hs1, pn - hs1) * 90.0);
+  color += mix(vec3(1.0), ICE, 0.35) * g1 * (1.0 + uLevel * 1.4);
+  alpha = max(alpha, g1 * 0.9);
+  float hsA2 = -uTime * 0.09 + 2.2;
+  vec2 hs2 = vec2(cos(hsA2), sin(hsA2)) * 0.71;
+  float g2 = exp(-dot(pn - hs2, pn - hs2) * 110.0);
+  color += ORANGE * g2 * (0.9 + uBass * 0.8);
+  alpha = max(alpha, g2 * 0.85);
 
   // rim tick marks near the outer edge
   float tickIndex = floor(aN / TAU * 60.0);

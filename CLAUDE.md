@@ -49,6 +49,20 @@ ting enkelt, på norsk, og gi konkrete PowerShell-kommandoer når det trengs.
 Boksene 4–6 fylles av morgenrutinen; uten den viser de en pen
 "kjør morgenrutinen"-tilstand, aldri feil.
 
+## Planeter (rundt orben)
+
+Små klikkbare "planeter" roterer i ellipsebane rundt orbens ytterskall
+(`public/js/planets.js`). Hover viser et delt infokort; klikk fester det.
+Planeten fryser i banen mens den er hovret/festet.
+
+- Vær-planet (cyan): været i Ålesund via Open-Meteo — gratis, INGEN API-nøkkel
+  (`lib/weather.js`, endepunkt `/api/planets/weather`, cache 10 min)
+- Konto-planet (oransje): saldo fra feltet `account` i `data/claude-data.json`
+  (`lib/account.js`, `/api/planets/account`) — bank-API-er krever PSD2-avtale,
+  så tallene legges inn manuelt/av morgenrutinen. Uten feltet: pen fallback.
+- Ny planet = ny oppføring i PLANETS-lista i `planets.js` + et
+  `/api/planets/<id>`-endepunkt i `server.js`.
+
 ## Kritiske regler (lærd av bugs)
 
 - Én delt overlay-panel gjenbrukes for alle bokser. Utsatt opprydding

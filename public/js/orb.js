@@ -27,6 +27,20 @@ const vec3 DARK = vec3(0.02, 0.02, 0.02);
 const float TAU = 6.28318530718;
 const float PI = 3.14159265359;
 
+// solsystemets 8 planeter: Merkur, Venus, Jorden, Mars,
+// Jupiter, Saturn, Uranus, Neptun
+const vec3 PLANET_COL[8] = vec3[8](
+  vec3(0.62, 0.58, 0.54),
+  vec3(0.92, 0.78, 0.52),
+  vec3(0.22, 0.48, 0.88),
+  vec3(0.88, 0.38, 0.20),
+  vec3(0.82, 0.64, 0.44),
+  vec3(0.90, 0.80, 0.55),
+  vec3(0.58, 0.82, 0.86),
+  vec3(0.28, 0.42, 0.92)
+);
+const float PLANET_SIZE[8] = float[8](0.013, 0.019, 0.021, 0.017, 0.040, 0.034, 0.026, 0.025);
+
 mat2 rot(float a) {
   float s = sin(a), c = cos(a);
   return mat2(c, -s, s, c);
@@ -167,16 +181,45 @@ void main() {
   color += ORANGE * accent * (1.1 + uLevel * 0.8);
   alpha = max(alpha, accent * 0.9);
 
-  // 8 small circle nodes studded around the bezel
+  // mini solar system: 8 shaded planets orbiting within the bezel,
+  // Merkur innermost/fastest, Neptun outermost/slowest
+  vec2 pp = uv / pulse;
   for (int i = 0; i < 8; i++) {
-    float a = float(i) * (TAU / 8.0) + uTime * 0.04;
-    vec2 nodePos = vec2(cos(a), sin(a)) * 0.725;
-    float d = length(uv / pulse - nodePos);
-    float nodeRing = smoothstep(0.010, 0.004, abs(d - 0.030));
-    float nodeFill = 1.0 - smoothstep(0.024, 0.030, d);
-    color = mix(color, DARK, nodeFill * 0.9);
-    color += mix(vec3(1.0), ICE, 0.35) * nodeRing * (0.85 + uLevel * 1.2 + uTreble * 0.5);
-    alpha = max(alpha, max(nodeRing, nodeFill * 0.9));
+    float fi = float(i);
+    float orbitR = 0.60 + fi * 0.028;
+    float speed = 0.16 / (0.6 + fi * 0.35);
+    float a = hash(fi * 21.7) * TAU + uTime * speed;
+    vec2 nodePos = vec2(cos(a), sin(a)) * orbitR;
+    float size = PLANET_SIZE[i];
+    vec2 lp = (pp - nodePos) / size;
+    float d2 = dot(lp, lp);
+
+    // Saturns skråstilte ring
+    if (i == 5) {
+      vec2 q = rot(0.55) * lp;
+      float ringD = abs(length(vec2(q.x * 0.62, q.y * 1.9)) - 1.15);
+      float ringM = smoothstep(0.22, 0.08, ringD) * step(1.0, d2);
+      color = mix(color, vec3(0.85, 0.78, 0.60), ringM * 0.85);
+      alpha = max(alpha, ringM * 0.85);
+    }
+
+    if (d2 < 1.0) {
+      // enkel kuleskygge med lys fra øvre venstre
+      float nz = sqrt(1.0 - d2);
+      vec3 nrm = normalize(vec3(lp, nz));
+      float diff = max(dot(nrm, normalize(vec3(-0.45, 0.55, 0.72))), 0.0);
+      vec3 pc = PLANET_COL[i];
+      if (i == 4) pc *= 0.88 + 0.12 * sin(lp.y * 5.5); // Jupiters bånd
+      vec3 shaded = pc * (0.22 + 0.85 * diff);
+      float body = 1.0 - smoothstep(0.92, 1.0, sqrt(d2));
+      color = mix(color, shaded, body);
+      alpha = max(alpha, body);
+    }
+
+    // myk glød så planetene løfter seg fra den mørke ytterkanten
+    float glow = exp(-d2 * 1.4) * 0.18;
+    color += PLANET_COL[i] * glow * (1.0 + uLevel * 0.8);
+    alpha = max(alpha, glow);
   }
 
   // ================= LAYERED BROKEN ARCS =================

@@ -4,10 +4,11 @@ void main() {
   gl_Position = vec4(aPos, 0.0, 1.0);
 }`;
 
-// Arc-reactor style orb: concentric rings alternating orange/cyan, a
-// spirograph rose in the core, four glowing nodes, a dark center hole,
-// an outer bezel of instrument tick marks, and a rotating precision scan
-// arc — HUD dial details inspired by Iron Man's Jarvis interface.
+// Tron/Jarvis HUD reactor (modeled on design-refs/jarvis.jpg):
+// a broad luminous WHITE main ring, a cyan technical core with a tick
+// dial and rotating segmented arcs, a dark mechanical outer bezel with
+// hairline rings, plate arcs, 8 small circle nodes and rim ticks.
+// Voice (uLevel) flares the white ring and cyan glow.
 // Pixels outside the outer radius discard early for performance.
 const FRAGMENT_SRC = `#version 300 es
 precision highp float;
@@ -21,11 +22,29 @@ uniform vec2 uResolution;
 
 const vec3 ORANGE = vec3(0.980, 0.420, 0.024);
 const vec3 CYAN = vec3(0.0, 0.565, 0.788);
+const vec3 ICE = vec3(0.55, 0.85, 1.0);
 const vec3 DARK = vec3(0.02, 0.02, 0.02);
+const float TAU = 6.28318530718;
+const float PI = 3.14159265359;
 
 mat2 rot(float a) {
   float s = sin(a), c = cos(a);
   return mat2(c, -s, s, c);
+}
+
+// thin ring line centered at r0 with half-width hw
+float ringLine(float r, float r0, float hw, float w) {
+  return smoothstep(hw + w, max(hw - w, 0.0), abs(r - r0));
+}
+
+// solid band between r0..r1
+float bandMask(float r, float r0, float r1, float w) {
+  return smoothstep(r0 - w, r0 + w, r) * (1.0 - smoothstep(r1 - w, r1 + w, r));
+}
+
+// dashed arc: n segments, fill = fraction lit, spins with speed
+float dashes(float a, float n, float fill, float spin) {
+  return step(fract(a / TAU * n + spin), fill);
 }
 
 void main() {
@@ -34,15 +53,15 @@ void main() {
 
   // fake-3D nodding tilt: squash vertically and rotate slightly over time
   float tilt = sin(uTime * 0.35) * 0.18;
-  float squash = 0.78 + 0.06 * cos(uTime * 0.35);
+  float squash = 0.82 + 0.05 * cos(uTime * 0.35);
   uv.y /= squash;
   uv = rot(tilt * 0.4) * uv;
 
   float radius = length(uv);
   float angle = atan(uv.y, uv.x);
 
-  float pulse = 1.0 + uLevel * 0.35;
-  float outerR = 0.86 * pulse;
+  float pulse = 1.0 + uLevel * 0.22;
+  float outerR = 0.90 * pulse;
 
   if (radius > outerR) {
     fragColor = vec4(0.0);
@@ -50,80 +69,119 @@ void main() {
   }
 
   float w = fwidth(radius) + 0.0008;
+  float r = radius / pulse;      // feature-space radius (pulses as a whole)
+  float ww = w / pulse;
+  float aN = mod(angle + TAU, TAU);
   vec3 color = vec3(0.0);
   float alpha = 0.0;
 
   // depth shading: lighter toward the "front" face of the tilted disc
-  float depth = 0.5 + 0.5 * sin(angle - tilt);
+  float depth = 0.7 + 0.3 * sin(angle - tilt);
 
-  // concentric rings (thin, sharp hairlines rather than soft bands)
-  float ringCount = 12.0;
-  float ringPhase = radius * ringCount - uTime * (0.6 + uLevel * 1.4 + uBass * 0.8);
-  float ringDist = abs(fract(ringPhase) - 0.5) * 2.0;
-  float ringMask = smoothstep(0.5, 0.5 - w * ringCount * 0.9, ringDist);
-  ringMask *= 1.0 - smoothstep(outerR - 0.035, outerR, radius);
-  float ringIndex = floor(ringPhase);
-  vec3 ringColor = mix(ORANGE, CYAN, mod(ringIndex, 2.0));
-  color += ringColor * ringMask * (0.55 + uLevel * 0.7) * (0.6 + depth * 0.4);
-  alpha = max(alpha, ringMask * 0.9);
+  // ================= CENTER DIAL =================
+  // dark hole with a crisp white micro-ring around it
+  float holeMask = 1.0 - smoothstep(0.050 - ww, 0.050 + ww, r);
+  color = mix(color, DARK, holeMask);
+  alpha = max(alpha, holeMask * 0.95);
+  float microRing = ringLine(r, 0.058, 0.004, ww);
+  color += vec3(1.0) * microRing * (0.9 + uLevel * 0.6);
+  alpha = max(alpha, microRing);
 
-  // spirograph rose core
-  float coreR = 0.42 * pulse;
-  if (radius < coreR) {
-    float k = 5.0;
-    float roseR = coreR * (0.35 + 0.65 * abs(cos(k * (angle + uTime * 0.5))));
-    float roseLine = abs(radius - roseR);
-    float roseMask = smoothstep(w * 3.0, 0.0, roseLine);
-    vec3 roseColor = mix(CYAN, vec3(1.0), 0.3 + 0.5 * uLevel);
-    color += roseColor * roseMask * (0.8 + uLevel + uTreble * 0.6);
-    alpha = max(alpha, roseMask);
+  // small tick dial (like the inner instrument ring)
+  float dialTicks = dashes(aN, 28.0, 0.55, -uTime * 0.02) * bandMask(r, 0.075, 0.098, ww);
+  color += ICE * dialTicks * (0.8 + uTreble * 0.8);
+  alpha = max(alpha, dialTicks * 0.9);
 
-    float holeR = 0.10 * (1.0 - uLevel * 0.3);
-    float holeMask = 1.0 - smoothstep(holeR - w, holeR + w, radius);
-    color = mix(color, DARK, holeMask);
-    alpha = max(alpha, holeMask * 0.95);
+  // ================= CYAN TECH CORE =================
+  // soft cyan glow disc filling the core
+  float coreGlow = bandMask(r, 0.06, 0.36, 0.05) * (0.42 + uBass * 0.45 + uLevel * 0.25);
+  coreGlow *= 0.88 + 0.12 * sin(uTime * 1.3);
+  color += CYAN * coreGlow;
+  alpha = max(alpha, coreGlow * 0.85);
+
+  // faint icy petal structure for organic motion
+  float roseR = 0.30 * (0.45 + 0.55 * abs(cos(6.0 * (angle + uTime * 0.22))));
+  float roseMask = smoothstep(ww * 3.5, 0.0, abs(r - roseR)) * bandMask(r, 0.09, 0.34, ww);
+  color += mix(CYAN, ICE, 0.6) * roseMask * (0.35 + uLevel * 0.7);
+  alpha = max(alpha, roseMask * 0.6);
+
+  // thin cyan hairlines in the core
+  float coreLines = ringLine(r, 0.135, 0.0025, ww) + ringLine(r, 0.175, 0.0025, ww);
+  color += CYAN * coreLines * 0.9;
+  alpha = max(alpha, coreLines * 0.9);
+
+  // rotating segmented arcs (two counter-rotating dashed rings)
+  float seg1 = dashes(aN, 12.0, 0.62, uTime * 0.05) * ringLine(r, 0.225, 0.011, ww);
+  color += mix(CYAN, ICE, 0.4) * seg1 * (1.0 + uLevel * 0.9);
+  alpha = max(alpha, seg1 * 0.95);
+  float seg2 = dashes(aN, 18.0, 0.5, -uTime * 0.035) * ringLine(r, 0.30, 0.008, ww);
+  color += ICE * seg2 * (0.9 + uTreble * 0.7);
+  alpha = max(alpha, seg2 * 0.9);
+
+  // bright cyan band just inside the white ring
+  float cyanBand = bandMask(r, 0.345, 0.385, ww * 2.0);
+  color += CYAN * cyanBand * (1.3 + uLevel * 0.8 + uBass * 0.4);
+  alpha = max(alpha, cyanBand * 0.95);
+
+  // ================= THE WHITE MAIN RING =================
+  float whiteCore = bandMask(r, 0.425, 0.525, ww * 2.0);
+  float whiteGlow = exp(-pow(abs(r - 0.475) * 14.0, 2.0));
+  // subtle rotating shimmer so it feels alive even at rest
+  float shimmer = 1.0 + 0.10 * sin(aN * 3.0 - uTime * 0.8);
+  float whiteIntensity = (1.15 + uLevel * 2.0 + uBass * 0.3) * shimmer;
+  color += vec3(1.0) * whiteCore * whiteIntensity * (0.85 + depth * 0.15);
+  color += mix(vec3(1.0), ICE, 0.5) * whiteGlow * whiteIntensity * 0.55;
+  alpha = max(alpha, whiteCore);
+  alpha = max(alpha, whiteGlow * 0.8);
+
+  // ================= DARK MECHANICAL BEZEL =================
+  float bezel = bandMask(r, 0.56, 0.86, ww * 2.0);
+  color += vec3(0.030, 0.036, 0.042) * bezel * (0.6 + depth * 0.4);
+  alpha = max(alpha, bezel * 0.72);
+
+  // hairline cyan rings across the bezel
+  float bezelLines = ringLine(r, 0.575, 0.0025, ww)
+                   + ringLine(r, 0.655, 0.002, ww)
+                   + ringLine(r, 0.79, 0.002, ww);
+  color += CYAN * bezelLines * 0.55 * (0.6 + depth * 0.4);
+  alpha = max(alpha, bezelLines * 0.8);
+
+  // slow mechanical plate arcs (dark cyan segments)
+  float plates = dashes(aN, 6.0, 0.8, uTime * 0.012) * ringLine(r, 0.615, 0.024, ww);
+  color += CYAN * plates * 0.30;
+  alpha = max(alpha, plates * 0.85);
+
+  // one thin ORANGE accent arc, counter-rotating (brand accent)
+  float accDiff = mod(aN - mod(-uTime * 0.25, TAU) + PI, TAU) - PI;
+  float accent = smoothstep(0.7, 0.05, abs(accDiff)) * ringLine(r, 0.685, 0.006, ww);
+  color += ORANGE * accent * (1.1 + uLevel * 0.8);
+  alpha = max(alpha, accent * 0.9);
+
+  // 8 small circle nodes studded around the bezel
+  for (int i = 0; i < 8; i++) {
+    float a = float(i) * (TAU / 8.0) + uTime * 0.04;
+    vec2 nodePos = vec2(cos(a), sin(a)) * 0.725;
+    float d = length(uv / pulse - nodePos);
+    float nodeRing = smoothstep(0.010, 0.004, abs(d - 0.030));
+    float nodeFill = 1.0 - smoothstep(0.024, 0.030, d);
+    color = mix(color, DARK, nodeFill * 0.9);
+    color += mix(vec3(1.0), ICE, 0.35) * nodeRing * (0.85 + uLevel * 1.2 + uTreble * 0.5);
+    alpha = max(alpha, max(nodeRing, nodeFill * 0.9));
   }
 
-  // four glowing nodes orbiting at mid-radius
-  float nodeR = 0.62 * pulse;
-  for (int i = 0; i < 4; i++) {
-    float a = float(i) * 1.5707963 + uTime * 0.25;
-    vec2 nodePos = vec2(cos(a), sin(a)) * nodeR;
-    float d = length(uv - nodePos);
-    float glow = smoothstep(0.16, 0.0, d) * (0.5 + uLevel * 1.6 + uBass * 0.5);
-    color += CYAN * glow;
-    alpha = max(alpha, glow * 0.8);
-  }
+  // rim tick marks near the outer edge
+  float tickIndex = floor(aN / TAU * 60.0);
+  float tickFrac = fract(aN / TAU * 60.0) - 0.5;
+  float isMajor = step(mod(tickIndex, 5.0), 0.5);
+  float tickAng = smoothstep(mix(0.10, 0.16, isMajor), 0.03, abs(tickFrac));
+  float ticks = tickAng * bandMask(r, mix(0.825, 0.805, isMajor), 0.845, ww);
+  color += CYAN * ticks * (0.75 + uTreble * 0.6 + uLevel * 0.4);
+  alpha = max(alpha, ticks * 0.85);
 
-  // outer bezel: instrument tick marks like a dial rim
-  const float TAU = 6.28318530718;
-  float angleN = mod(angle + TAU, TAU);
-  float tickCount = 72.0;
-  float tickIndex = floor(angleN / TAU * tickCount);
-  float tickFrac = fract(angleN / TAU * tickCount) - 0.5;
-  float isMajorTick = step(mod(tickIndex, 6.0), 0.5);
-  float tickHalfWidth = mix(0.045, 0.09, isMajorTick);
-  float tickAngularMask = smoothstep(tickHalfWidth, tickHalfWidth * 0.4, abs(tickFrac));
-  float tickLen = mix(0.028, 0.055, isMajorTick);
-  float tickOuter = outerR - 0.012;
-  float tickInner = tickOuter - tickLen;
-  float tickRadialMask = smoothstep(tickInner - w, tickInner + w, radius) * (1.0 - smoothstep(tickOuter - w, tickOuter + w, radius));
-  float tickMask = tickAngularMask * tickRadialMask;
-  vec3 tickColor = mix(CYAN, ORANGE, 0.15);
-  color += tickColor * tickMask * (0.7 + uLevel * 0.6);
-  alpha = max(alpha, tickMask * 0.85);
-
-  // rotating precision scan arc around the node ring
-  float scanAngle = mod(uTime * 0.9, TAU);
-  float scanDiff = mod(angleN - scanAngle + 3.14159265, TAU) - 3.14159265;
-  float scanDist = abs(scanDiff);
-  float scanMask = smoothstep(0.5, 0.05, scanDist);
-  float scanBandInner = nodeR - 0.035;
-  float scanBandOuter = nodeR + 0.035;
-  float scanRadial = smoothstep(scanBandInner - w, scanBandInner + w, radius) * (1.0 - smoothstep(scanBandOuter - w, scanBandOuter + w, radius));
-  float scanGlow = scanMask * scanRadial * (0.9 + uLevel * 1.0 + uTreble * 0.5);
-  color += mix(CYAN, vec3(1.0), 0.6) * scanGlow;
-  alpha = max(alpha, scanGlow * 0.9);
+  // crisp outer rim
+  float rim = ringLine(r, 0.875, 0.0035, ww);
+  color += mix(CYAN, ICE, 0.3) * rim * (0.9 + uLevel * 0.6);
+  alpha = max(alpha, rim * 0.95);
 
   float edge = 1.0 - smoothstep(outerR - w * 2.0, outerR, radius);
   alpha *= edge;

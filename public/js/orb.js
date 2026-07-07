@@ -7,7 +7,10 @@ void main() {
 // Tron/Jarvis HUD reactor (modeled on design-refs/jarvis.jpg):
 // a broad luminous WHITE main ring, a cyan technical core with a tick
 // dial and rotating segmented arcs, a dark mechanical outer bezel with
-// hairline rings, plate arcs, 8 small circle nodes and rim ticks.
+// hairline rings, plate arcs, a mini solar system and rim ticks.
+// 3D: every feature group lives on its own depth layer — a lean vector
+// shifts the layers apart (parallax) and scales them (perspective) as
+// the reactor nods, and a glossy specular sweep crosses the front face.
 // Voice (uLevel) flares the white ring and cyan glow.
 // Pixels outside the outer radius discard early for performance.
 const FRAGMENT_SRC = `#version 300 es
@@ -71,6 +74,10 @@ float hash(float n) {
   return fract(sin(n * 127.1) * 43758.5453);
 }
 
+// parallax: layer at height h (h>0 = nearer the viewer) is shifted
+// against the lean direction and scaled slightly larger
+#define LAYER_UV(h) ((uv - lean * (h)) * (1.0 - (h) * 0.05))
+
 void main() {
   vec2 uv = (gl_FragCoord.xy / uResolution) * 2.0 - 1.0;
   uv.x *= uResolution.x / uResolution.y;
@@ -87,70 +94,91 @@ void main() {
   float pulse = 1.0 + uLevel * 0.22;
   float outerR = 0.90 * pulse;
 
-  if (radius > outerR) {
+  // layers can poke slightly past the shell — allow a margin before discard
+  if (radius > outerR + 0.12) {
     fragColor = vec4(0.0);
     return;
   }
 
+  // lean direction for the parallax stack; wobbles with the nod
+  vec2 lean = vec2(sin(uTime * 0.42) * 0.35, -0.85) * 0.055;
+
   float w = fwidth(radius) + 0.0008;
-  float r = radius / pulse;      // feature-space radius (pulses as a whole)
   float ww = w / pulse;
-  float aN = mod(angle + TAU, TAU);
   vec3 color = vec3(0.0);
   float alpha = 0.0;
 
-  // depth shading: lighter toward the "front" face of the tilted disc
+  // base plane (h = 0): the white main ring lives here
+  float r = radius / pulse;
+  float aN = mod(angle + TAU, TAU);
   float depth = 0.7 + 0.3 * sin(angle - tilt);
 
-  // ================= CENTER DIAL =================
-  // dark hole with a crisp white micro-ring around it
-  float holeMask = 1.0 - smoothstep(0.050 - ww, 0.050 + ww, r);
+  // raised core plane (h = +1.2)
+  vec2 uvC = LAYER_UV(1.2);
+  float rC = length(uvC) / pulse;
+  float aC = atan(uvC.y, uvC.x);
+  float aNC = mod(aC + TAU, TAU);
+
+  // mid plane for the rotating segments (h = +0.6)
+  vec2 uvM = LAYER_UV(0.6);
+  float rM = length(uvM) / pulse;
+  float aNM = mod(atan(uvM.y, uvM.x) + TAU, TAU);
+
+  // recessed bezel plane (h = -0.9)
+  vec2 uvB = LAYER_UV(-0.9);
+  float rB = length(uvB) / pulse;
+  float aB = atan(uvB.y, uvB.x);
+  float aNB = mod(aB + TAU, TAU);
+  float depthB = 0.7 + 0.3 * sin(aB - tilt);
+
+  // deepest rim plane (h = -1.3)
+  vec2 uvR = LAYER_UV(-1.3);
+  float rR = length(uvR) / pulse;
+  float aNR = mod(atan(uvR.y, uvR.x) + TAU, TAU);
+
+  // ================= CENTER DIAL (raised plane) =================
+  float holeMask = 1.0 - smoothstep(0.050 - ww, 0.050 + ww, rC);
   color = mix(color, DARK, holeMask);
   alpha = max(alpha, holeMask * 0.95);
-  float microRing = ringLine(r, 0.058, 0.004, ww);
+  float microRing = ringLine(rC, 0.058, 0.004, ww);
   color += vec3(1.0) * microRing * (0.9 + uLevel * 0.6);
   alpha = max(alpha, microRing);
 
-  // small tick dial (like the inner instrument ring)
-  float dialTicks = dashes(aN, 28.0, 0.55, -uTime * 0.02) * bandMask(r, 0.075, 0.098, ww);
+  float dialTicks = dashes(aNC, 28.0, 0.55, -uTime * 0.02) * bandMask(rC, 0.075, 0.098, ww);
   color += ICE * dialTicks * (0.8 + uTreble * 0.8);
   alpha = max(alpha, dialTicks * 0.9);
 
-  // ================= CYAN TECH CORE =================
-  // soft cyan glow disc filling the core
-  float coreGlow = bandMask(r, 0.06, 0.36, 0.05) * (0.42 + uBass * 0.45 + uLevel * 0.25);
+  // ================= CYAN TECH CORE (raised plane) =================
+  float coreGlow = bandMask(rC, 0.06, 0.36, 0.05) * (0.42 + uBass * 0.45 + uLevel * 0.25);
   coreGlow *= 0.88 + 0.12 * sin(uTime * 1.3);
   color += CYAN * coreGlow;
   alpha = max(alpha, coreGlow * 0.85);
 
-  // faint icy petal structure for organic motion
-  float roseR = 0.30 * (0.45 + 0.55 * abs(cos(6.0 * (angle + uTime * 0.22))));
-  float roseMask = smoothstep(ww * 3.5, 0.0, abs(r - roseR)) * bandMask(r, 0.09, 0.34, ww);
+  float roseR = 0.30 * (0.45 + 0.55 * abs(cos(6.0 * (aC + uTime * 0.22))));
+  float roseMask = smoothstep(ww * 3.5, 0.0, abs(rC - roseR)) * bandMask(rC, 0.09, 0.34, ww);
   color += mix(CYAN, ICE, 0.6) * roseMask * (0.35 + uLevel * 0.7);
   alpha = max(alpha, roseMask * 0.6);
 
-  // thin cyan hairlines in the core
-  float coreLines = ringLine(r, 0.135, 0.0025, ww) + ringLine(r, 0.175, 0.0025, ww);
+  float coreLines = ringLine(rC, 0.135, 0.0025, ww) + ringLine(rC, 0.175, 0.0025, ww);
   color += CYAN * coreLines * 0.9;
   alpha = max(alpha, coreLines * 0.9);
 
-  // rotating segmented arcs (two counter-rotating dashed rings)
-  float seg1 = dashes(aN, 12.0, 0.62, uTime * 0.05) * ringLine(r, 0.225, 0.011, ww);
+  // rotating segmented arcs on the mid plane
+  float seg1 = dashes(aNM, 12.0, 0.62, uTime * 0.05) * ringLine(rM, 0.225, 0.011, ww);
   color += mix(CYAN, ICE, 0.4) * seg1 * (1.0 + uLevel * 0.9);
   alpha = max(alpha, seg1 * 0.95);
-  float seg2 = dashes(aN, 18.0, 0.5, -uTime * 0.035) * ringLine(r, 0.30, 0.008, ww);
+  float seg2 = dashes(aNM, 18.0, 0.5, -uTime * 0.035) * ringLine(rM, 0.30, 0.008, ww);
   color += ICE * seg2 * (0.9 + uTreble * 0.7);
   alpha = max(alpha, seg2 * 0.9);
 
-  // bright cyan band just inside the white ring
-  float cyanBand = bandMask(r, 0.345, 0.385, ww * 2.0);
+  // bright cyan band just inside the white ring (mid plane)
+  float cyanBand = bandMask(rM, 0.345, 0.385, ww * 2.0);
   color += CYAN * cyanBand * (1.3 + uLevel * 0.8 + uBass * 0.4);
   alpha = max(alpha, cyanBand * 0.95);
 
-  // ================= THE WHITE MAIN RING =================
+  // ================= THE WHITE MAIN RING (base plane) =================
   float whiteCore = bandMask(r, 0.425, 0.525, ww * 2.0);
   float whiteGlow = exp(-pow(abs(r - 0.475) * 14.0, 2.0));
-  // subtle rotating shimmer so it feels alive even at rest
   float shimmer = 1.0 + 0.10 * sin(aN * 3.0 - uTime * 0.8);
   float whiteIntensity = (1.15 + uLevel * 2.0 + uBass * 0.3) * shimmer;
   color += vec3(1.0) * whiteCore * whiteIntensity * (0.85 + depth * 0.15);
@@ -158,32 +186,30 @@ void main() {
   alpha = max(alpha, whiteCore);
   alpha = max(alpha, whiteGlow * 0.8);
 
-  // ================= DARK MECHANICAL BEZEL =================
-  float bezel = bandMask(r, 0.56, 0.86, ww * 2.0);
-  color += vec3(0.030, 0.036, 0.042) * bezel * (0.6 + depth * 0.4);
+  // ================= DARK MECHANICAL BEZEL (recessed plane) =================
+  float bezel = bandMask(rB, 0.56, 0.86, ww * 2.0);
+  color += vec3(0.030, 0.036, 0.042) * bezel * (0.6 + depthB * 0.4);
   alpha = max(alpha, bezel * 0.72);
 
-  // hairline cyan rings across the bezel
-  float bezelLines = ringLine(r, 0.575, 0.0025, ww)
-                   + ringLine(r, 0.655, 0.002, ww)
-                   + ringLine(r, 0.79, 0.002, ww);
-  color += CYAN * bezelLines * 0.55 * (0.6 + depth * 0.4);
+  float bezelLines = ringLine(rB, 0.575, 0.0025, ww)
+                   + ringLine(rB, 0.655, 0.002, ww)
+                   + ringLine(rB, 0.79, 0.002, ww);
+  color += CYAN * bezelLines * 0.55 * (0.6 + depthB * 0.4);
   alpha = max(alpha, bezelLines * 0.8);
 
-  // slow mechanical plate arcs (dark cyan segments)
-  float plates = dashes(aN, 6.0, 0.8, uTime * 0.012) * ringLine(r, 0.615, 0.024, ww);
+  float plates = dashes(aNB, 6.0, 0.8, uTime * 0.012) * ringLine(rB, 0.615, 0.024, ww);
   color += CYAN * plates * 0.30;
   alpha = max(alpha, plates * 0.85);
 
   // one thin ORANGE accent arc, counter-rotating (brand accent)
-  float accDiff = mod(aN - mod(-uTime * 0.25, TAU) + PI, TAU) - PI;
-  float accent = smoothstep(0.7, 0.05, abs(accDiff)) * ringLine(r, 0.685, 0.006, ww);
+  float accDiff = mod(aNB - mod(-uTime * 0.25, TAU) + PI, TAU) - PI;
+  float accent = smoothstep(0.7, 0.05, abs(accDiff)) * ringLine(rB, 0.685, 0.006, ww);
   color += ORANGE * accent * (1.1 + uLevel * 0.8);
   alpha = max(alpha, accent * 0.9);
 
   // mini solar system: 8 shaded planets orbiting within the bezel,
   // Merkur innermost/fastest, Neptun outermost/slowest
-  vec2 pp = uv / pulse;
+  vec2 pp = uvB / pulse;
   for (int i = 0; i < 8; i++) {
     float fi = float(i);
     float orbitR = 0.60 + fi * 0.028;
@@ -222,18 +248,23 @@ void main() {
     alpha = max(alpha, glow);
   }
 
-  // ================= LAYERED BROKEN ARCS =================
+  // ================= LAYERED BROKEN ARCS (own depth per layer) =================
   // many pseudo-random dashed arc layers at scattered radii, mixed
   // cyan/white/orange, rotating at different speeds — the dense
   // "technical layering" of the reference art
   for (int i = 0; i < 10; i++) {
     float fi = float(i);
+    float hL = (hash(fi * 13.1) - 0.5) * 2.4; // each arc floats at its own height
+    vec2 uvL = LAYER_UV(hL);
+    float rL = length(uvL) / pulse;
+    float aNL = mod(atan(uvL.y, uvL.x) + TAU, TAU);
+
     float ri = 0.14 + 0.76 * fract(fi / 10.0 + hash(fi * 7.31) * 0.6);
     float th = mix(0.0025, 0.009, hash(fi * 3.7)) + step(0.85, hash(fi * 11.3)) * 0.012;
     float segs = floor(mix(2.0, 22.0, hash(fi * 5.7)));
     float fill = mix(0.35, 0.92, hash(fi * 9.2));
     float spin = (hash(fi * 4.4) - 0.5) * 0.10 * uTime;
-    float m = dashes(aN, segs, fill, spin) * ringLine(r, ri, th, ww);
+    float m = dashes(aNL, segs, fill, spin) * ringLine(rL, ri, th, ww);
     float ch = hash(fi * 6.6);
     vec3 c = ch < 0.42 ? CYAN : (ch < 0.72 ? mix(ICE, vec3(1.0), 0.5) : ORANGE);
     float it = mix(0.35, 1.0, hash(fi * 8.8)) * (0.8 + uLevel * 0.8);
@@ -241,16 +272,16 @@ void main() {
     alpha = max(alpha, m * min(it, 1.0) * 0.85);
   }
 
-  // ================= DIGITAL DATA BLOCKS =================
+  // ================= DIGITAL DATA BLOCKS (bezel plane) =================
   // flickering block-grid wedges that read as streams of tiny data text
-  float wedge = smoothstep(0.62, 0.22, angDist(aN, 2.35))
-              + smoothstep(0.62, 0.22, angDist(aN, 5.55));
-  float cu = floor(aN * 22.0);
-  float cv = floor(r * 56.0);
+  float wedge = smoothstep(0.62, 0.22, angDist(aNB, 2.35))
+              + smoothstep(0.62, 0.22, angDist(aNB, 5.55));
+  float cu = floor(aNB * 22.0);
+  float cv = floor(rB * 56.0);
   float on = step(0.52, hash(cu * 13.7 + cv * 7.9 + floor(uTime * 2.0) * 0.618));
-  float bx = step(0.18, fract(aN * 22.0)) * (1.0 - step(0.82, fract(aN * 22.0)));
-  float by = step(0.15, fract(r * 56.0)) * (1.0 - step(0.75, fract(r * 56.0)));
-  float dataMask = on * bx * by * bandMask(r, 0.56, 0.87, ww) * wedge;
+  float bx = step(0.18, fract(aNB * 22.0)) * (1.0 - step(0.82, fract(aNB * 22.0)));
+  float by = step(0.15, fract(rB * 56.0)) * (1.0 - step(0.75, fract(rB * 56.0)));
+  float dataMask = on * bx * by * bandMask(rB, 0.56, 0.87, ww) * wedge;
   color += mix(CYAN, ICE, 0.4) * dataMask * 0.40;
   alpha = max(alpha, dataMask * 0.45);
 
@@ -274,21 +305,21 @@ void main() {
   alpha = max(alpha, sector * 0.45);
 
   // long bright cyan arcs just outside the white ring
-  float arcs = dashes(aN, 3.0, 0.82, uTime * 0.016) * ringLine(r, 0.585, 0.0045, ww);
+  float arcs = dashes(aNM, 3.0, 0.82, uTime * 0.016) * ringLine(rM, 0.585, 0.0045, ww);
   color += mix(CYAN, ICE, 0.5) * arcs * (1.1 + uLevel * 0.6);
   alpha = max(alpha, arcs * 0.9);
 
   // fine cyan data ring + sparse orange dashes in the bezel
-  float data1 = dashes(aN, 48.0, 0.55, -uTime * 0.02) * ringLine(r, 0.705, 0.004, ww);
+  float data1 = dashes(aNB, 48.0, 0.55, -uTime * 0.02) * ringLine(rB, 0.705, 0.004, ww);
   color += CYAN * data1 * 0.8;
   alpha = max(alpha, data1 * 0.85);
-  float data2 = dashes(aN, 10.0, 0.35, uTime * 0.03) * ringLine(r, 0.755, 0.007, ww);
+  float data2 = dashes(aNB, 10.0, 0.35, uTime * 0.03) * ringLine(rB, 0.755, 0.007, ww);
   color += ORANGE * data2 * (0.75 + uLevel * 0.5);
   alpha = max(alpha, data2 * 0.85);
 
   // thin radial spokes across the bezel, like HUD grid lines
-  float spokeFrac = abs(fract(aN / TAU * 16.0) - 0.5);
-  float spokeMask = smoothstep(0.035, 0.01, spokeFrac) * bandMask(r, 0.58, 0.85, ww);
+  float spokeFrac = abs(fract(aNB / TAU * 16.0) - 0.5);
+  float spokeMask = smoothstep(0.035, 0.01, spokeFrac) * bandMask(rB, 0.58, 0.85, ww);
   color += mix(CYAN, vec3(1.0), 0.3) * spokeMask * 0.16;
   alpha = max(alpha, spokeMask * 0.28);
 
@@ -305,21 +336,32 @@ void main() {
   color += ORANGE * g2 * (0.9 + uBass * 0.8);
   alpha = max(alpha, g2 * 0.85);
 
-  // rim tick marks near the outer edge
-  float tickIndex = floor(aN / TAU * 60.0);
-  float tickFrac = fract(aN / TAU * 60.0) - 0.5;
+  // rim tick marks near the outer edge (deepest plane)
+  float tickIndex = floor(aNR / TAU * 60.0);
+  float tickFrac = fract(aNR / TAU * 60.0) - 0.5;
   float isMajor = step(mod(tickIndex, 5.0), 0.5);
   float tickAng = smoothstep(mix(0.10, 0.16, isMajor), 0.03, abs(tickFrac));
-  float ticks = tickAng * bandMask(r, mix(0.825, 0.805, isMajor), 0.845, ww);
+  float ticks = tickAng * bandMask(rR, mix(0.825, 0.805, isMajor), 0.845, ww);
   color += CYAN * ticks * (0.75 + uTreble * 0.6 + uLevel * 0.4);
   alpha = max(alpha, ticks * 0.85);
 
-  // crisp outer rim
-  float rim = ringLine(r, 0.875, 0.0035, ww);
+  // crisp outer rim (deepest plane)
+  float rim = ringLine(rR, 0.875, 0.0035, ww);
   color += mix(CYAN, ICE, 0.3) * rim * (0.9 + uLevel * 0.6);
   alpha = max(alpha, rim * 0.95);
 
-  float edge = 1.0 - smoothstep(outerR - w * 2.0, outerR, radius);
+  // ================= 3D LIGHTING OVER THE STACK =================
+  // glossy specular sweep across the front face, sliding with the nod
+  float gl = dot(pn, normalize(vec2(-0.55, 0.83)));
+  float glass = exp(-pow(gl - 0.30 - sin(uTime * 0.42) * 0.10, 2.0) * 16.0) * 0.09;
+  glass *= 1.0 - smoothstep(0.86, 0.95, r);
+  color += vec3(1.0) * glass;
+  alpha = max(alpha, glass * 0.6);
+
+  // faint face light: the lower (nearer) half of the disc catches more light
+  color *= 0.86 + 0.14 * clamp(-uv.y / 0.9, -1.0, 1.0) * 0.5 + 0.07;
+
+  float edge = 1.0 - smoothstep(outerR + 0.07, outerR + 0.11, radius);
   alpha *= edge;
 
   fragColor = vec4(color, clamp(alpha, 0.0, 1.0));

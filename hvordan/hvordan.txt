@@ -1,0 +1,33 @@
+Godt spørsmål — her er hvordan det faktisk henger sammen:
+
+## Slik jobber jeg nå (denne økten)
+
+Jeg kjører **ikke** på PC-en din. Jeg jobber i et isolert skymiljø hos Anthropic som har en egen kopi av repoet. Jeg kan ikke se eller røre filene på din maskin. Så arbeidsflyten med meg her er:
+
+1. Du ber om en endring
+2. Jeg koder den i skymiljøet, tester, og **pusher til GitHub**
+3. Du henter den ned på PC-en med to kommandoer:
+   ```powershell
+   cd $HOME\jarvis
+   git pull
+   ```
+4. Restart serveren (Ctrl+C → `npm start`) — ferdig
+
+Det høres ut som et ekstra ledd, men i praksis er det bare den ene `git pull`-kommandoen for deg. Fordelen er at alt er versjonert: hvis en endring ødela noe, kan vi rulle tilbake til forrige versjon.
+
+## Alternativet: Claude Code direkte på PC-en din
+
+Hvis du vil at jeg skal jobbe **rett på filene dine** uten GitHub som mellomledd, kan du installere Claude Code lokalt på Windows:
+
+```powershell
+npm install -g @anthropic-ai/claude-code
+```
+
+Deretter åpner du en terminal i jarvis-mappen og skriver `claude`. Da kjører en Claude-økt direkte i mappen din og redigerer filene på stedet — endringene er live med en gang du restarter serveren, ingen push/pull nødvendig. (Du logger inn med samme Claude-konto som du bruker nå.)
+
+## Min anbefaling
+
+- **Små justeringer og eksperimenter** («endre fargen», «gjør orben større»): lokal Claude Code er raskest.
+- **Større ombygginger**: gjerne via meg her + GitHub, siden alt blir versjonert og du kan angre trygt. Du kan også fint bruke begge — GitHub holder uansett historikken samlet så lenge du committer og pusher lokale endringer innimellom.
+
+Så svaret er: *jeg her i skyen* må gå via GitHub, men *Claude Code installert lokalt* kan endre direkte på PC-en din.

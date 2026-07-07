@@ -5,7 +5,9 @@ void main() {
 }`;
 
 // Arc-reactor style orb: concentric rings alternating orange/cyan, a
-// spirograph rose in the core, four glowing nodes, and a dark center hole.
+// spirograph rose in the core, four glowing nodes, a dark center hole,
+// an outer bezel of instrument tick marks, and a rotating precision scan
+// arc — HUD dial details inspired by Iron Man's Jarvis interface.
 // Pixels outside the outer radius discard early for performance.
 const FRAGMENT_SRC = `#version 300 es
 precision highp float;
@@ -54,11 +56,11 @@ void main() {
   // depth shading: lighter toward the "front" face of the tilted disc
   float depth = 0.5 + 0.5 * sin(angle - tilt);
 
-  // concentric rings
-  float ringCount = 10.0;
+  // concentric rings (thin, sharp hairlines rather than soft bands)
+  float ringCount = 12.0;
   float ringPhase = radius * ringCount - uTime * (0.6 + uLevel * 1.4 + uBass * 0.8);
   float ringDist = abs(fract(ringPhase) - 0.5) * 2.0;
-  float ringMask = smoothstep(0.5, 0.5 - w * ringCount * 1.6, ringDist);
+  float ringMask = smoothstep(0.5, 0.5 - w * ringCount * 0.9, ringDist);
   ringMask *= 1.0 - smoothstep(outerR - 0.035, outerR, radius);
   float ringIndex = floor(ringPhase);
   vec3 ringColor = mix(ORANGE, CYAN, mod(ringIndex, 2.0));
@@ -92,6 +94,36 @@ void main() {
     color += CYAN * glow;
     alpha = max(alpha, glow * 0.8);
   }
+
+  // outer bezel: instrument tick marks like a dial rim
+  const float TAU = 6.28318530718;
+  float angleN = mod(angle + TAU, TAU);
+  float tickCount = 72.0;
+  float tickIndex = floor(angleN / TAU * tickCount);
+  float tickFrac = fract(angleN / TAU * tickCount) - 0.5;
+  float isMajorTick = step(mod(tickIndex, 6.0), 0.5);
+  float tickHalfWidth = mix(0.045, 0.09, isMajorTick);
+  float tickAngularMask = smoothstep(tickHalfWidth, tickHalfWidth * 0.4, abs(tickFrac));
+  float tickLen = mix(0.028, 0.055, isMajorTick);
+  float tickOuter = outerR - 0.012;
+  float tickInner = tickOuter - tickLen;
+  float tickRadialMask = smoothstep(tickInner - w, tickInner + w, radius) * (1.0 - smoothstep(tickOuter - w, tickOuter + w, radius));
+  float tickMask = tickAngularMask * tickRadialMask;
+  vec3 tickColor = mix(CYAN, ORANGE, 0.15);
+  color += tickColor * tickMask * (0.7 + uLevel * 0.6);
+  alpha = max(alpha, tickMask * 0.85);
+
+  // rotating precision scan arc around the node ring
+  float scanAngle = mod(uTime * 0.9, TAU);
+  float scanDiff = mod(angleN - scanAngle + 3.14159265, TAU) - 3.14159265;
+  float scanDist = abs(scanDiff);
+  float scanMask = smoothstep(0.5, 0.05, scanDist);
+  float scanBandInner = nodeR - 0.035;
+  float scanBandOuter = nodeR + 0.035;
+  float scanRadial = smoothstep(scanBandInner - w, scanBandInner + w, radius) * (1.0 - smoothstep(scanBandOuter - w, scanBandOuter + w, radius));
+  float scanGlow = scanMask * scanRadial * (0.9 + uLevel * 1.0 + uTreble * 0.5);
+  color += mix(CYAN, vec3(1.0), 0.6) * scanGlow;
+  alpha = max(alpha, scanGlow * 0.9);
 
   float edge = 1.0 - smoothstep(outerR - w * 2.0, outerR, radius);
   alpha *= edge;

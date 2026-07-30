@@ -159,20 +159,30 @@ Dette er ikke bare teknikk — det er hele forutsetningen for at folk tør å v�
 
 ## 6. Teknologi (forklart enkelt)
 
-Målet ditt: **«en GUI-app alle kan laste ned når vi lanserer».** Det betyr en
-ekte skrivebordsapp med ikon, ikke en nettside.
+Målet ditt: **en app alle kan laste ned — og nå vet vi at den skal være på
+mobil** (det er der et par faktisk lever hverdagen, ikke ved en PC).
 
-- **Anbefaling: Electron eller Tauri.** Da kan vi gjenbruke akkurat den samme
-  typen HTML/CSS/JS som Jarvis allerede er bygget med, men pakke det som en
-  `.exe` (Windows) og `.dmg` (Mac) som folk bare dobbeltklikker.
-  - *Electron* = enklest, mest kjent, litt tyngre fil.
-  - *Tauri* = mye mindre og raskere fil, litt mer å sette opp.
-  - **Forslag:** vi starter med Electron (raskest å få noe kjørende), og kan
-    bytte til Tauri før lansering hvis vi vil ha en lettere app.
-- Ingen server nødvendig — alt kjører på maskinen. Det passer perfekt med
-  personvern-regelen over.
+- **Mobil først, men gjenbruk det vi allerede har.** MVP-en vi bygde er vanlig
+  HTML/CSS/JS. Med et verktøy som heter **Capacitor** kan vi pakke akkurat den
+  samme koden som ekte iPhone- og Android-apper (App Store / Google Play), uten
+  å skrive alt på nytt. Det betyr at treet, telleren og rubrikkene du allerede
+  har sett kan bli mobilappen.
+- **Skrivebord blir en bonus, ikke hovedsaken.** Den samme koden kan fortsatt
+  pakkes som PC/Mac-app (Electron) hvis vi vil, men mobilen er der vi sikter.
 - Samme arbeidsflyt som i dag: jeg koder i skyen → pusher til GitHub → du henter
   med `git pull`.
+
+### Viktig: Claude-rådgiveren krever litt mer enn de andre delene
+De fleste delene av appen kan ligge helt lokalt på telefonen. Men **Claude som
+rådgiver** (se seksjon 10) fungerer annerledes, og det er ærlig å si det rett ut:
+
+- Claude kjører ikke *inne* i telefonen — appen må sende spørsmålet til Claude
+  over internett og få svar tilbake.
+- Nøkkelen som gir tilgang til Claude **kan ikke ligge i selve appen** (da kunne
+  hvem som helst hentet den ut). Den må ligge på en liten **server** i mellom —
+  appen snakker med serveren, serveren snakker med Claude.
+- Det betyr to ting vi må bestemme: **hvem betaler** for bruken (hvert svar fra
+  Claude koster litt), og **hva vi sender** (se personvern, seksjon 5 + 10).
 
 ---
 
@@ -222,14 +232,71 @@ hverandre igjen. Det er nok. Det er faktisk ganske mye.
 
 ---
 
-## 9. Åpne spørsmål til neste gang
+## 10. Ny retning (fra samtalen med Ole): mobil + Claude som rådgiver
 
-- Skal appen være for **ett par** på én maskin, eller skal begge ha hver sin
-  enhet som synker?
-- Skal barna kunne bruke deler av den selv (familierådet), eller er den kun for
-  de voksne?
-- Hvor mye tekst-innhold vil dere skrive selv, og hvor mye skal jeg utkaste?
+Dette er den store utvidelsen. Appen skal ikke bare *minne og vise* — den skal
+kunne **snakke med dere og gi råd**, med Claude som en rolig rådgiver i lomma.
+
+### 10.1 Claude som familierådgiver
+En egen «Rådgiver»-del i appen der dere kan spørre om det som er vanskelig, og få
+gjennomtenkte, varme svar bygget på ekte parpsykologi (Gottman, tilknytning,
+Perel, ikkevoldskommunikasjon — samme kunnskapsgrunnlag som rubrikkene).
+
+Bruksområder:
+- **«Hvordan kommer vi oss gjennom denne episoden?»** — dere beskriver en konkret
+  krangel eller en vond kveld, og Claude hjelper med å forstå hva som skjedde og
+  foreslår neste rolige steg (ikke hvem som «vant»).
+- **Forberede den ukentlige samtalen** — Claude foreslår spørsmål tilpasset akkurat
+  deres situasjon.
+- **Familieråd-hjelp** — Claude kan foreslå en agenda for ukens familiemøte ut fra
+  det dere har notert om barna og hverdagen.
+
+Teknisk (enkelt sagt): appen sender spørsmålet til en liten server → serveren
+spør **Claude** (modell: `claude-opus-5`, den mest gjennomtenkte og empatiske;
+`claude-sonnet-5` er et billigere alternativ hvis kostnad blir viktig) → svaret
+kommer rolig tilbake i appen.
+
+> ⚠️ **Grenser for rådgiveren — ufravikelig:** Claude er en støtte, ikke en
+> terapeut, og *aldri* en dommer mellom dere. Ved tegn på vold, rus, selvmordstanker
+> eller alvorlig krise skal rådgiveren stoppe det vanlige sporet og peke til ekte
+> hjelp (familievernkontoret, fastlege, 113/112). Rådgiveren skal aldri ta parti,
+> aldri oppbevare noe hemmelig for den ene mot den andre, og alltid være noe *begge*
+> har valgt frivillig.
+
+### 10.2 Personvern-avveiningen (den viktige, ærlige)
+Kjerneløftet vårt var «alt lagres lokalt». Rådgiveren bryter litt med det, fordi
+spørsmålet må sendes ut for å få et svar. Det er ikke farlig, men det skal være
+**ærlig og frivillig**:
+
+- Rådgiveren er **av som standard** — dere skrur den på bevisst.
+- Appen sender **bare det dere skriver i rådgiver-boksen** — ikke hele kalenderen,
+  ikke bekymringstreet, ikke barnas notater.
+- Vi er tydelige i appen på at akkurat denne delen snakker med en tjeneste ute.
+- Resten av appen (tre, teller, kalender, familieråd) forblir **helt lokal**.
+
+### 10.3 Konkret familiekalender med ukentlig gjennomgang
+Du ba om en *konkret* kalender der familien går gjennom ukens planer, og der de
+voksne («familiens overhoder») har en anbefalt rådgivings-økt. Slik ser vi det:
+
+- **Ukevisning** — hele familiens uke på ett sted: barnas aktiviteter, hvem
+  henter/leverer, avtaler, hvem-gjør-hva.
+- **Søndagens familieråd** — et fast punkt der dere går gjennom uka som kommer,
+  snakker om barnas hverdag, og legger dagsplanen for familien.
+- **De voksnes økt** — rett etter familierådet, en kort, anbefalt stund bare for
+  paret, der Claude-rådgiveren gjerne foreslår ett spørsmål eller ett tema å ta.
+- **Påminnelser** — milde varsler på telefonen når det er tid for gjennomgangen.
+
+---
+
+## 11. Åpne spørsmål til neste gang
+
+- **Hvem betaler for Claude-rådgiveren?** (Hver families bruk koster litt.)
+  Alternativer: dere legger inn deres egen nøkkel, et lite abonnement, eller vi
+  dekker en enkel gratis-grense. — *Dette bør vi lande før vi bygger rådgiveren.*
+- Er personvern-avveiningen i 10.2 grei for deg, eller vil du stramme den mer?
+- Skal appen være for **ett par** som deler, eller to telefoner som synker?
+- Skal barna kunne bruke deler av den selv (familierådet)?
 - Navn på appen? («Bekymringstreet», «Hjemme», «Undring», noe japansk?)
-- Hvilken plattform først — Windows (som Jarvis) eller også Mac med en gang?
+- iPhone, Android, eller begge først?
 
 *Skrevet som utgangspunkt for neste samtale. — Ta gjerne rødpennen fatt.*

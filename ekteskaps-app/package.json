@@ -1,0 +1,13 @@
+{
+  "name": "ekteskaps-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "En rolig ekteskaps-app - bekymringstreet, ekteskapstelleren, samtaler. Alt lagres lokalt.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^31.7.0"
+  }
+}

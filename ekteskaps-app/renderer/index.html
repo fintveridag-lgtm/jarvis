@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bekymringstreet</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Bakgrunn: rolig kveldshimmel -->
+  <div class="sky" aria-hidden="true">
+    <div class="moon"></div>
+    <div class="mist"></div>
+  </div>
+
+  <main class="app">
+    <!-- ===================== BEKYMRINGSTREET ===================== -->
+    <section class="screen screen--tree is-active" data-screen="tree">
+      <header class="tree-intro">
+        <p class="kicker">Velkommen hjem</p>
+        <h1>Bekymringstreet</h1>
+        <p class="lead">Før du går inn til den du er glad i — heng fra deg dagen her.
+          Lappen forsvinner ikke, men den er lagt fra deg for kvelden.</p>
+      </header>
+
+      <div class="tree-stage">
+        <svg class="tree" viewBox="0 0 400 340" aria-hidden="true">
+          <defs>
+            <linearGradient id="bark" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#4a3b30" />
+              <stop offset="1" stop-color="#2e241d" />
+            </linearGradient>
+            <radialGradient id="crown" cx="50%" cy="45%" r="60%">
+              <stop offset="0" stop-color="#2f5140" />
+              <stop offset="1" stop-color="#1c3327" />
+            </radialGradient>
+          </defs>
+          <!-- krone -->
+          <ellipse cx="200" cy="120" rx="150" ry="110" fill="url(#crown)" opacity="0.92" />
+          <ellipse cx="130" cy="150" rx="80" ry="70" fill="url(#crown)" opacity="0.6" />
+          <ellipse cx="275" cy="145" rx="90" ry="72" fill="url(#crown)" opacity="0.6" />
+          <!-- stamme -->
+          <path d="M188 200 q-6 60 -22 120 q30 8 68 0 q-16 -60 -22 -120 z" fill="url(#bark)" />
+          <!-- greiner -->
+          <path d="M200 190 q-30 -20 -70 -30 M200 195 q30 -18 74 -26 M200 205 q-14 -30 -20 -70 M200 205 q16 -28 30 -66"
+                stroke="#3a2d24" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.7" />
+        </svg>
+        <div class="hanging-layer" id="hangingLayer" aria-live="polite"></div>
+      </div>
+
+      <form class="worry-form" id="worryForm">
+        <label class="visually-hidden" for="worryInput">Skriv ned det som tynger</label>
+        <input id="worryInput" type="text" maxlength="90" autocomplete="off"
+               placeholder="Hva vil du henge fra deg i kveld?" />
+        <button type="submit" class="btn btn--soft">Heng på treet</button>
+      </form>
+
+      <button class="btn btn--enter" id="enterHouse">Gå inn i huset →</button>
+      <p class="tree-count" id="treeCount"></p>
+    </section>
+
+    <!-- ===================== HUSET (nav + innhold) ===================== -->
+    <div class="house" data-screen="house">
+      <nav class="nav">
+        <button class="nav__btn is-active" data-go="home">Hjem</button>
+        <button class="nav__btn" data-go="counter">Vår tid</button>
+        <button class="nav__btn" data-go="chapters">Rubrikker</button>
+        <button class="nav__btn" data-go="talk">Ukens samtale</button>
+        <button class="nav__btn nav__btn--ghost" data-go="tree">← Treet</button>
+      </nav>
+
+      <div class="views">
+        <!-- HJEM -->
+        <section class="view is-active" data-view="home">
+          <h2 id="greeting">God kveld</h2>
+          <p class="lead" id="homeLead">Ta et pust. Dere er hjemme nå.</p>
+          <div class="card card--wonder">
+            <p class="card__kicker">Dagens undring</p>
+            <p class="wonder-quote" id="wonderQuote"></p>
+          </div>
+          <div class="home-grid">
+            <button class="tile" data-go="counter"><span>🕯️</span><b id="tileDays">–</b><small>dager sammen</small></button>
+            <button class="tile" data-go="talk"><span>🍵</span><b id="tileTalk">—</b><small>neste samtale</small></button>
+            <button class="tile" data-go="chapters"><span>📖</span><b>7</b><small>rubrikker å lese</small></button>
+          </div>
+        </section>
+
+        <!-- VÅR TID (teller) -->
+        <section class="view" data-view="counter">
+          <h2>Vår tid</h2>
+          <div class="counter-big"><b id="counterDays">–</b><small>dager</small></div>
+          <p class="counter-sub" id="counterSub">Sett datoen deres for å begynne å telle.</p>
+          <div class="milestone" id="milestone"></div>
+          <form class="date-form" id="dateForm">
+            <label for="dateInput">Vår dato (bryllup eller «sammen siden»)</label>
+            <input type="date" id="dateInput" />
+            <div class="date-form__row">
+              <input type="text" id="labelInput" maxlength="30" placeholder="F.eks. «gift» eller «sammen»" />
+              <button type="submit" class="btn btn--soft">Lagre</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- RUBRIKKER -->
+        <section class="view" data-view="chapters">
+          <h2>Hvordan holde seg gift</h2>
+          <p class="lead">Korte kapitler å komme tilbake til. Les ett når dere har ro.</p>
+          <div class="chapters" id="chapters"></div>
+        </section>
+
+        <!-- UKENS SAMTALE -->
+        <section class="view" data-view="talk">
+          <h2>Ukens samtale</h2>
+          <p class="lead">Trekk et kort. Still hverandre spørsmålet. Ingen fasit — bare undring.</p>
+          <div class="talk-card" id="talkCard">
+            <p class="talk-card__q" id="talkQ">Trykk «Trekk et kort» for å begynne.</p>
+          </div>
+          <div class="talk-actions">
+            <button class="btn btn--soft" id="drawCard">Trekk et kort</button>
+            <button class="btn btn--done" id="doneTalk">Vi snakket ✓</button>
+          </div>
+          <div class="reminder">
+            <label for="reminderDay">Fast tid for samtalen:</label>
+            <select id="reminderDay">
+              <option value="0">Søndag</option><option value="1">Mandag</option>
+              <option value="2">Tirsdag</option><option value="3">Onsdag</option>
+              <option value="4">Torsdag</option><option value="5">Fredag</option>
+              <option value="6">Lørdag</option>
+            </select>
+            <span class="reminder__status" id="reminderStatus"></span>
+          </div>
+        </section>
+      </div>
+
+      <footer class="foot">
+        <span>Alt lagres kun på denne maskinen. 🔒</span>
+        <button class="foot__link" id="helpBtn">Trenger dere mer hjelp?</button>
+      </footer>
+    </div>
+  </main>
+
+  <!-- Hjelp-dialog -->
+  <dialog id="helpDialog" class="dialog">
+    <h3>Denne appen er et støtteverktøy — ikke en terapeut</h3>
+    <p>Den kan minne, invitere og hjelpe dere å se hverandre. Men ved vold, rus,
+       eller når det virkelig butter over tid, fortjener dere ekte hjelp.</p>
+    <ul>
+      <li><b>Familievernkontoret</b> — gratis parterapi i Norge (bufdir.no).</li>
+      <li><b>Legevakt / fastlege</b> — hvis noen har det vondt.</li>
+      <li><b>Ved fare: ring 113 (ambulanse) eller 112 (politi).</b></li>
+    </ul>
+    <form method="dialog"><button class="btn btn--soft">Lukk</button></form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

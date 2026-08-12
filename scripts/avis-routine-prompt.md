@@ -71,6 +71,24 @@ SKRIV til data/avis-data.json med NØYAKTIG dette skjemaet:
 Ikke dikt opp tall eller kilder. Tomt er bedre enn galt.
 ```
 
+## Variant: finpuss etter Ollama-natten (anbefalt oppsett)
+
+Hvis natt-pipelinen (`scripts/avis-pipeline/`) allerede har kjørt, finnes en
+ferdig `data/avis-data.json` fylt av den lokale Ollama-modellen. Da trenger ikke
+Claude lete fra bunnen — la den heller **finpusse**:
+
+```
+Les data/avis-data.json. Behold nøyaktig samme skjema, seksjoner og — VIKTIG —
+samme "url", "source" og "date" på hver sak (ikke bytt kilder). Forbedre kun
+"summary" til korte, velskrevne norske reportasje-ingresser, og korriger "tag"
+hvis Ollama har merket noe feil (husk: UFO/"hemmelige funn" er som regel
+spekulasjon, ikke fakta). Fjern tynne eller dubletter. Skriv resultatet tilbake
+til data/avis-data.json. Ikke dikt opp tall eller kilder.
+```
+
+Dette er den beste arbeidsdelingen: Ollama gjør den store, gratis siljobben om
+natten; Claude løfter språket om morgenen.
+
 ## Planlegging
 
 Sett opp en planlagt jobb (cron/launchd/Windows Oppgaveplanlegger, eller et

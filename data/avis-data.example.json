@@ -1,0 +1,118 @@
+{
+  "generatedAt": "2026-08-12T05:30:00+02:00",
+  "edition": "Tirsdag 12. august 2026",
+  "sections": [
+    {
+      "id": "kosthold",
+      "title": "Kosthold & Trening",
+      "icon": "🥩",
+      "items": [
+        {
+          "title": "Ny studie: tidsbegrenset spising ga bedre insulinrespons",
+          "summary": "Randomisert studie på 200 deltakere fant at 8-timers spisevindu bedret fastende blodsukker uten kaloritelling.",
+          "tag": "forskning",
+          "source": "Cell Metabolism",
+          "url": "https://example.com/tre-studie",
+          "date": "2026-08-11",
+          "period": "day"
+        }
+      ]
+    },
+    {
+      "id": "penger",
+      "title": "Børs & Pengemakt",
+      "icon": "💰",
+      "items": [
+        {
+          "title": "S&P 500 opp 0,6 % — forsvarsaksjer trekker",
+          "summary": "Store forsvarskontraktører steg etter nye rammeavtaler. Gull flatt, Bitcoin ned 1,2 %.",
+          "tag": "fakta",
+          "source": "Reuters",
+          "url": "https://example.com/marked",
+          "date": "2026-08-12",
+          "period": "day"
+        }
+      ]
+    },
+    {
+      "id": "gen",
+      "title": "Genteknologi & Peptider",
+      "icon": "🧬",
+      "items": [
+        {
+          "title": "CRISPR-behandling for arvelig høyt kolesterol i fase 2",
+          "summary": "Én-gangs base-redigering senket LDL varig hos de første pasientene. Peptidet BPC-157 er fortsatt kun i preklinisk/dyre-forskning — ingen godkjent human bruk.",
+          "tag": "forskning",
+          "source": "Nature Biotechnology",
+          "url": "https://example.com/crispr",
+          "date": "2026-08-10",
+          "period": "week"
+        }
+      ]
+    },
+    {
+      "id": "arkeologi",
+      "title": "Arkeologi & Giza",
+      "icon": "🏛️",
+      "items": [
+        {
+          "title": "Ny muon-skanning kartlegger hulrom i Kheops-pyramiden",
+          "summary": "Forskerteam publiserte oppdaterte data om det store hulrommet over storgalleriet. Ingen tunnel funnet — tolkningen er fortsatt omdiskutert.",
+          "tag": "debatt",
+          "source": "Journal of Archaeological Science",
+          "url": "https://example.com/giza",
+          "date": "2026-08-08",
+          "period": "week"
+        }
+      ]
+    },
+    {
+      "id": "ai",
+      "title": "AI & Fremtid",
+      "icon": "🤖",
+      "items": [
+        {
+          "title": "Nytt gjennombrudd innen langtidsminne for agenter",
+          "summary": "Forskningsartikkel viser modeller som holder kontekst over uker. Kan endre hvordan assistenter husker.",
+          "tag": "forskning",
+          "source": "arXiv",
+          "url": "https://example.com/ai",
+          "date": "2026-08-09",
+          "period": "week"
+        }
+      ]
+    },
+    {
+      "id": "ufo",
+      "title": "UFO/UAP & Det uforklarte",
+      "icon": "🛸",
+      "items": [
+        {
+          "title": "Ny offisiell UAP-rapport lagt fram for kongressen",
+          "summary": "Rapporten beskriver flere uforklarte observasjoner, men konkluderer ikke om opprinnelse. Kritikere peker på manglende rådata.",
+          "tag": "spekulasjon",
+          "source": "AARO / offentlig høring",
+          "url": "https://example.com/uap",
+          "date": "2026-08-05",
+          "period": "month"
+        }
+      ]
+    },
+    {
+      "id": "rogan",
+      "title": "Fra Rogan-sfæren",
+      "icon": "🎙️",
+      "items": [
+        {
+          "title": "Ukens store lange samtaler: langlevelse og bevissthet",
+          "summary": "Flere av de store podkastene tok opp NAD+, kaldeksponering og psykedelika-forskning denne uken. Inngang til temaer — ikke fasit.",
+          "tag": "debatt",
+          "source": "Podkast-oversikt",
+          "url": "https://example.com/rogan",
+          "date": "2026-08-07",
+          "period": "week"
+        }
+      ]
+    }
+  ]
+}

@@ -9,6 +9,7 @@ import { synthesizeBriefWithTimestamps } from './lib/elevenlabs.js';
 import { computeCues } from './lib/cues.js';
 import { getWeather } from './lib/weather.js';
 import { getAccount } from './lib/account.js';
+import { getAvis } from './lib/avis.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -43,6 +44,16 @@ app.get('/api/planets/weather', async (req, res) => {
 app.get('/api/planets/account', async (req, res) => {
   try {
     res.json(await getAccount());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Dagsavisen: leser data/avis-data.json (skrevet av avis-rutinen) og viser
+// den i public/avis.html. Serveren henter ingenting selv.
+app.get('/api/avis', async (req, res) => {
+  try {
+    res.json(await getAvis());
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jarvis — Dagsavisen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/avis.css" />
+</head>
+<body>
+
+<header class="masthead">
+  <a class="back" href="/" title="Til dashbordet">←</a>
+  <div class="masthead-mid">
+    <h1>DAGSAVISEN</h1>
+    <p class="tagline">Filosofi &amp; fremtiden · kuratert av Jarvis</p>
+  </div>
+  <div class="edition" id="edition">—</div>
+</header>
+
+<nav class="periods" id="periods" role="tablist" aria-label="Tidsrom">
+  <button class="period active" data-period="day" role="tab">I dag</button>
+  <button class="period" data-period="week" role="tab">Uken</button>
+  <button class="period" data-period="month" role="tab">Måneden</button>
+</nav>
+
+<div class="legend">
+  <span class="chip fakta">fakta</span>
+  <span class="chip forskning">forskning</span>
+  <span class="chip debatt">debatt</span>
+  <span class="chip spekulasjon">spekulasjon</span>
+</div>
+
+<main id="paper" class="paper"><p class="loading">Laster avisen…</p></main>
+
+<footer class="colophon" id="colophon"></footer>
+
+<script src="/js/avis.js"></script>
+</body>
+</html>

@@ -106,6 +106,19 @@ async function load() {
       `<p class="loading">Kunne ikke laste avisen: ${esc(err.message)}</p>`;
     return;
   }
+
+  // Land på den første fanen (I dag → Uken → Måneden) som faktisk har saker,
+  // slik at siden ikke ser tom ut når dagens stoff er tynt.
+  const periods = ['day', 'week', 'month'];
+  const hasItems = (p) =>
+    (state.data?.sections || []).some((s) =>
+      (s.items || []).some((it) => inPeriod(it, p)),
+    );
+  state.period = periods.find(hasItems) || 'day';
+  document
+    .querySelectorAll('.period')
+    .forEach((b) => b.classList.toggle('active', b.dataset.period === state.period));
+
   render();
 }
 

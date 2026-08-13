@@ -38,17 +38,15 @@ function periodFromDate(date) {
 }
 
 const SYSTEM = `Du er redaktør for en norsk temaavis. Du får en nummerert liste
-med ekte nyhetssaker (tittel, kilde, dato, utdrag). Velg de mest relevante og
-interessante (maks ${PICKS_PER_SECTION}). For hver valgt sak: skriv et kort,
-nøytralt norsk sammendrag (1-2 setninger) og sett en "tag":
+med ekte nyhetssaker. Velg de mest relevante og interessante (maks ${PICKS_PER_SECTION}).
+For hver valgt sak oppgir du BARE "index" (tallet foran saken) og en "tag":
 - "fakta": etablert/bekreftet hendelse
 - "forskning": studie / fagfellevurdert / pågående forskning
 - "debatt": diskusjon, tolkning eller mening
 - "spekulasjon": påstand uten solid bevis (typisk UFO, "hemmelige funn" o.l.)
-Vær ærlig med taggen. Ikke dikt opp innhold.
-Svar med KUN rå JSON — ingen forklaring, ingen markdown, ingen \`\`\`-gjerder.
-Start svaret med { og avslutt med }. Bruk nøyaktig denne formen:
-{"picks":[{"index":0,"summary":"<norsk sammendrag>","tag":"forskning"}]}`;
+Vær ærlig med taggen. Du skal IKKE skrive sammendrag — bare velge og merke.
+Svar med KUN rå JSON, ingen forklaring, ingen markdown. Nøyaktig denne formen:
+{"picks":[{"index":0,"tag":"forskning"}]}`;
 
 async function ollamaPick(section) {
   // Vis modellen bare de første N sakene, med korte utdrag — ellers sprenger vi
@@ -94,17 +92,34 @@ async function ollamaPick(section) {
   if (process.env.AVIS_DEBUG) {
     console.log(`\n  [DEBUG ${section.id}] råsvar fra modellen:\n${content.slice(0, 600)}\n`);
   }
-  const parsed = extractJson(content);
-  if (!parsed) {
-    if (process.env.AVIS_DEBUG) console.log('  [DEBUG] fant ingen JSON i svaret');
-    return { picks: [], raw: content };
+  const picks = parsePicks(content);
+  if (!picks.length && process.env.AVIS_DEBUG) {
+    console.log('  [DEBUG] fant ingen gyldige picks');
   }
-  // Godta både {"picks":[...]}, en naken liste, og vanlige alternative nøkler —
-  // små modeller følger ikke alltid skjemaet helt presist.
-  const arr = Array.isArray(parsed)
-    ? parsed
-    : parsed.picks || parsed.saker || parsed.valg || parsed.results || parsed.items || [];
-  return { picks: Array.isArray(arr) ? arr : [], raw: content };
+  return { picks, raw: content };
+}
+
+// Hent picks ut av modellsvaret. Prøver ekte JSON først; faller tilbake til en
+// regex-berging som plukker index + tag fra hvert {..}-objekt selv når JSON-en
+// er ødelagt (små modeller lager ofte nesten-gyldig JSON — dobbeltnøkler,
+// manglende hermetegn osv.).
+function parsePicks(content) {
+  const parsed = extractJson(content);
+  if (parsed) {
+    const arr = Array.isArray(parsed)
+      ? parsed
+      : parsed.picks || parsed.saker || parsed.valg || parsed.results || parsed.items || [];
+    if (Array.isArray(arr) && arr.length) return arr;
+  }
+  // Bergingsmodus: plukk hvert {..}-objekt og trekk ut index + tag med regex.
+  const picks = [];
+  for (const obj of content.match(/\{[^{}]*\}/g) || []) {
+    const idx = obj.match(/index"?\s*:\s*(\d+)/i);
+    if (!idx) continue;
+    const tag = obj.match(/"tag"?\s*:\s*"?([a-zæøåA-ZÆØÅ]+)/);
+    picks.push({ index: Number(idx[1]), tag: tag ? tag[1].toLowerCase() : undefined });
+  }
+  return picks;
 }
 
 // Plukk JSON ut av modellens tekst — tåler ```json-gjerder og forklarende prat
@@ -170,7 +185,10 @@ function buildItems(section, picks) {
     used.add(raw.url);
     out.push({
       title: raw.title,
-      summary: String(p.summary ?? p.sammendrag ?? raw.snippet ?? '').slice(0, 300),
+      // Teksten kommer fra den ekte RSS-kilden — ren og pålitelig. Den lokale
+      // modellen brukes bare til å velge + merke; Claude-morgentrinnet kan
+      // eventuelt skrive penere norske sammendrag senere.
+      summary: String(raw.snippet ?? p.summary ?? p.sammendrag ?? '').slice(0, 300),
       tag: VALID_TAGS.includes(p.tag) ? p.tag : 'debatt',
       source: raw.source, // alltid ekte
       url: raw.url, //        alltid ekte

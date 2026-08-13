@@ -5,23 +5,26 @@ Slik fylles avisen automatisk, uten sky og uten API-nøkler. Arbeidsdelingen:
 Claude kan gjøre en valgfri finpuss om morgenen.**
 
 ```
-  NATT (f.eks. 02:00)                MORGEN (valgfritt, f.eks. 05:00)
-  ┌───────────────┐  ┌────────────┐  ┌──────────────────┐
-  │ fetch.mjs     │→ │ digest.mjs │→ │ claude -p (polish)│→  avis-data.json
-  │ RSS → rå-JSON │  │ Ollama sile│  │  bedre reportasjer│      (ferdig avis)
-  └───────────────┘  └────────────┘  └──────────────────┘
-                          │
+  NATT (én kommando: npm run avis:natt)
+  ┌───────────────┐  ┌────────────┐  ┌──────────────┐
+  │ fetch.mjs     │→ │ digest.mjs │→ │ polish.mjs   │→  avis-data.json
+  │ RSS → rå-JSON │  │ Ollama sile│  │ Claude-finpuss│     (ferdig avis)
+  └───────────────┘  └────────────┘  └──────────────┘
+                          │                  │
+                          │                  └─ hopper over seg selv uten API-nøkkel
                           └─ ntfy-varsel til mobilen 📲
 ```
 
 - `fetch.mjs` — henter råstoff fra kildene i `feeds.mjs` (Google News RSS) →
   `data/avis-raw.json`. Ingen AI, bare innsamling.
-- `digest.mjs` — lar **Ollama** velge de beste sakene, skrive norske sammendrag
-  og merke hver (`fakta`/`forskning`/`debatt`/`spekulasjon`). Skriver den
-  ferdige `data/avis-data.json`. **Modellen får aldri finne opp kilder** — URL,
-  kilde og dato tas alltid uendret fra råstoffet.
-- Claude-morgentrinnet (valgfritt) — hever språket til ordentlige «reportasjer».
-  Avisen virker helt fint uten det; det er bare kremen på toppen.
+- `digest.mjs` — lar **Ollama** velge de beste sakene og merke hver
+  (`fakta`/`forskning`/`debatt`/`spekulasjon`). Skriver den ferdige
+  `data/avis-data.json`. Teksten er kilde-utdraget. **Modellen får aldri finne
+  opp kilder** — URL, kilde og dato tas alltid uendret fra råstoffet.
+- `polish.mjs` — **Claude** (modell `claude-opus-5`) skriver om utdragene til
+  velskrevne norske ingresser. Beholder url/kilde/dato/tag uendret. Krever
+  `ANTHROPIC_API_KEY` i `.env` — uten den hoppes trinnet pent over, og avisen
+  står med Ollama-tekstene. Alle tre kjøres av `npm run avis:natt`.
 
 ## Kom i gang (én gang)
 
@@ -90,12 +93,19 @@ Unregister-ScheduledTask -TaskName 'Jarvis Dagsavis' -Confirm:$false   # fjern o
 Windows og ligger i systemkurven). PC-en må være på eller i dvale (ikke helt
 avslått), siden alt kjører lokalt hos deg.
 
-## Valgfritt: Claude-finpuss kl. 05:00
+## Claude-finpuss (valgfritt, men på som standard)
 
-Vil du at Claude skal heve sakene til ordentlige reportasjer, lag en jobb til
-som kjører `claude -p` med prompten i `../avis-routine-prompt.md` (den leser
-`data/avis-data.json` og forbedrer teksten). Se den fila for detaljer. Dette
-krever at Claude-klienten er installert og innlogget på PC-en.
+`polish.mjs` kjøres automatisk sist i `npm run avis:natt`. Vil du slå den på:
+
+1. Hent en API-nøkkel på console.anthropic.com.
+2. Legg den i `.env`:
+   ```
+   ANTHROPIC_API_KEY=sk-ant-...
+   ```
+   (Vil du ha lavere kostnad, sett `CLAUDE_MODEL=claude-haiku-4-5`.)
+
+Uten nøkkel hopper trinnet pent over seg selv, og avisen står med de rene
+Ollama-tekstene. Test den alene med `npm run avis:polish`.
 
 ## Feilsøking
 

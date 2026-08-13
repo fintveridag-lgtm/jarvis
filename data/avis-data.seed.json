@@ -1,0 +1,208 @@
+{
+  "generatedAt": "2026-08-13T21:40:00+02:00",
+  "edition": "Torsdag 13. august 2026",
+  "sections": [
+    {
+      "id": "kosthold",
+      "title": "Kosthold & Trening",
+      "icon": "🥩",
+      "items": [
+        {
+          "title": "Funnet: «sweet spot» for styrketrening og lengre liv",
+          "summary": "En Harvard-ledet studie som fulgte 147 374 personer i 30 år fant at 90–120 minutter styrketrening i uka ga lavest dødelighet — rundt 13 % lavere risiko for å dø av alle årsaker.",
+          "tag": "forskning",
+          "source": "ScienceDaily / Harvard Chan",
+          "url": "https://www.sciencedaily.com/releases/2026/08/260808234959.htm",
+          "date": "2026-08-08",
+          "period": "week"
+        },
+        {
+          "title": "Professor testet seg selv: biologisk alder 15 år yngre",
+          "summary": "En forsker gjorde seg selv til forsøkskanin i en langlevelse-studie og hevder biologisk alder 15 år under den kronologiske. Merk: enkeltperson (n=1), ikke bevis for at metoden virker generelt.",
+          "tag": "debatt",
+          "source": "MedicalXpress",
+          "url": "https://medicalxpress.com/news/2026-08-professor-subject-longevity-biological-age.html",
+          "date": "2026-08-10",
+          "period": "week"
+        }
+      ]
+    },
+    {
+      "id": "penger",
+      "title": "Børs & Pengemakt",
+      "icon": "💰",
+      "items": [
+        {
+          "title": "S&P 500 over 7 700 for første gang — ny toppnotering",
+          "summary": "Indeksen satte ny rekord (7 793) etter svake julitall for jobber, tolket som at Fed ikke trenger å heve renten med det første.",
+          "tag": "fakta",
+          "source": "CNBC",
+          "url": "https://www.cnbc.com/2026/08/06/stock-market-today-live-updates.html",
+          "date": "2026-08-07",
+          "period": "week"
+        },
+        {
+          "title": "Gull til seks-ukers topp — sentralbanker kjøper",
+          "summary": "Gull steg 2,8 % til 4 213 dollar/unse, drevet av store innskudd i kinesiske ETF-er og fortsatte kjøp fra Kinas sentralbank (PBoC). Et konkret bilde av hvem som flytter kapital.",
+          "tag": "fakta",
+          "source": "Cointribune",
+          "url": "https://www.cointribune.com/en/gold-hits-a-six-week-high-while-bitcoin-stalls/",
+          "date": "2026-08-05",
+          "period": "week"
+        },
+        {
+          "title": "Bitcoin fast rundt 64 000 — markedet favoriserer gull",
+          "summary": "Bitcoin har stått stille i intervallet 60–65 000 dollar. På Polymarket har oddsen for at BTC slår gull i 2026 falt til 23 %, fra over 50 % i januar.",
+          "tag": "debatt",
+          "source": "CoinDesk",
+          "url": "https://www.coindesk.com/business/2026/08/03/live-updates-traders-say-bitcoin-sell-off-from-usd65-000-points-to-thin-volume-not-panic-selling",
+          "date": "2026-08-03",
+          "period": "month"
+        }
+      ]
+    },
+    {
+      "id": "gen",
+      "title": "Genteknologi & Peptider",
+      "icon": "🧬",
+      "items": [
+        {
+          "title": "Første CRISPR-forsøk på mennesker mot HIV: ingen påvist skade utenfor målet",
+          "summary": "En AAV9-levert CRISPR-behandling (EBT-101) mot latent HIV traff kun det tiltenkte DNA-et og var ute av blodet innen seks måneder, uten påvist off-target-skade — en tidlig sikkerhetsmilepæl.",
+          "tag": "forskning",
+          "source": "EATG",
+          "url": "https://www.eatg.org/hiv-news/first-in-human-trial-of-crispr-gene-therapy-for-hiv/",
+          "date": "",
+          "period": "month"
+        },
+        {
+          "title": "NIH-finansiert gjennombrudd krymper CRISPR for presis levering i kroppen",
+          "summary": "Et forskerteam beskriver et forbedret, mindre CRISPR-system som kan gjøre målrettet levering inne i kroppen enklere — et steg mot bredere klinisk bruk.",
+          "tag": "forskning",
+          "source": "NIH",
+          "url": "https://www.nih.gov/news-events/news-releases/nih-funded-breakthrough-shrinks-crispr-precision-delivery-body",
+          "date": "",
+          "period": "month"
+        },
+        {
+          "title": "Fase 1: CRISPR-redigering mot ANGPTL3 (blodfett)",
+          "summary": "New England Journal of Medicine publiserte en fase 1-studie av CRISPR-Cas9 rettet mot ANGPTL3-genet, knyttet til kolesterol/blodfett.",
+          "tag": "forskning",
+          "source": "NEJM",
+          "url": "https://www.nejm.org/doi/full/10.1056/NEJMoa2511778",
+          "date": "",
+          "period": "month"
+        }
+      ]
+    },
+    {
+      "id": "arkeologi",
+      "title": "Arkeologi & Giza",
+      "icon": "🏛️",
+      "items": [
+        {
+          "title": "Hawass lover Giza-avsløring i 2026 som skal «skrive om historien»",
+          "summary": "Egyptologen Zahi Hawass hevder skanning har funnet en ~30 meter lang gang som ender i en forseglet dør, og at innholdet avsløres i 2026. Innholdet er ikke bekreftet — en teaser, ikke et funn ennå.",
+          "tag": "spekulasjon",
+          "source": "The Jerusalem Post",
+          "url": "https://www.jpost.com/archaeology/article-873314",
+          "date": "",
+          "period": "month"
+        },
+        {
+          "title": "Slik «ser» forskerne inn i pyramiden uten å røre en stein",
+          "summary": "Teamene bruker myon-tomografi, georadar, 3D-modellering, termisk skanning og AI-basert anomali-deteksjon for å kartlegge hulrom. Kraftige metoder — men tolkningen av hva hulrommene er, er fortsatt omdiskutert.",
+          "tag": "debatt",
+          "source": "The Debrief",
+          "url": "https://thedebrief.org/hidden-inside-the-great-pyramid-of-giza-a-tantalizing-discovery-may-soon-write-a-new-chapter-in-the-history-of-the-pharaohs/",
+          "date": "",
+          "period": "month"
+        }
+      ]
+    },
+    {
+      "id": "ai",
+      "title": "AI & Fremtid",
+      "icon": "🤖",
+      "items": [
+        {
+          "title": "Nye modeller slippes nå som programvare-oppdateringer",
+          "summary": "Ifølge modell-sporingstjenester kom bl.a. DeepSeek-V4-Pro (13. aug) og Grok 4.6 (12. aug) på rekke og rad. Trenden: hyppige, inkrementelle slipp heller enn store enkelt-lanseringer.",
+          "tag": "debatt",
+          "source": "AI Release Tracker",
+          "url": "https://aireleasetracker.com/latest",
+          "date": "2026-08-13",
+          "period": "day"
+        },
+        {
+          "title": "Åpne modeller tetter gapet til de lukkede",
+          "summary": "Bransjeoversikter melder at åpne modell-familier (Qwen3.5, Kimi K3 med 1M-token kontekst, MiniMax M3) nå måler seg med lukkede toppmodeller på flere prøver. Benchmarktall er leverandørenes egne — les med et snev av skepsis.",
+          "tag": "debatt",
+          "source": "mean.ceo",
+          "url": "https://blog.mean.ceo/new-ai-model-releases-news-august-2026/",
+          "date": "",
+          "period": "month"
+        }
+      ]
+    },
+    {
+      "id": "ufo",
+      "title": "UFO/UAP & Det uforklarte",
+      "icon": "🛸",
+      "items": [
+        {
+          "title": "USA slipper femte pulje avgraderte UAP-filer",
+          "summary": "Forsvarsdepartementet publiserte en ny runde avgraderte UAP-dokumenter (PURSUE-programmet), bl.a. termisk video av to «black-hot» anomalier og sivile observasjoner. At filene slippes er fakta; hva anomaliene ER, er fortsatt uforklart.",
+          "tag": "debatt",
+          "source": "TIME",
+          "url": "https://time.com/article/2026/08/06/america-taking-extraterrestrials-seriously/",
+          "date": "2026-08-06",
+          "period": "week"
+        },
+        {
+          "title": "Pentagon gransker UAP-hendelse utenfor Virginia-kysten",
+          "summary": "En hendelse rapportert av marinen nær Virginias kyst er under gransking. Uforklart så langt — ingen konklusjon om opphav.",
+          "tag": "spekulasjon",
+          "source": "DefenseScoop",
+          "url": "https://defensescoop.com/2026/07/21/pentagon-investigating-ufo-uap-event-near-virginia-coast/",
+          "date": "2026-07-21",
+          "period": "month"
+        },
+        {
+          "title": "Kongress-utvalg varsler ny UFO-åpenhetshøring",
+          "summary": "En oppgavestyrke i Representantenes hus (ledet av Anna Paulina Luna) skal holde høring om åpenhet rundt UAP, med vitner fra myndighetene.",
+          "tag": "debatt",
+          "source": "The Hill",
+          "url": "https://thehill.com/homenews/house/5483793-ufo-transparency-government-witnesses/",
+          "date": "",
+          "period": "month"
+        }
+      ]
+    },
+    {
+      "id": "rogan",
+      "title": "Fra Rogan-sfæren",
+      "icon": "🎙️",
+      "items": [
+        {
+          "title": "David Sinclair om langlevelse hos Rogan",
+          "summary": "Langlevelse-forskeren David Sinclair var gjest 7. august — en fin inngang til debatten om aldring og hva som faktisk er godt underbygd. Bruk som samtale-startpunkt, ikke fasit.",
+          "tag": "debatt",
+          "source": "JRE Library",
+          "url": "https://jrelibrary.com/upcoming-guests/",
+          "date": "2026-08-07",
+          "period": "week"
+        },
+        {
+          "title": "På vei inn: Glenn Greenwald og Aljamain Sterling",
+          "summary": "Blant kommende/omtalte gjester er journalisten Glenn Greenwald og MMA-utøveren Aljamain Sterling — bredden som gjør podkasten til en temperaturmåler på hva som diskuteres.",
+          "tag": "debatt",
+          "source": "Podcast Lite",
+          "url": "https://podcastlite.com/top-joe-rogan-podcast-guest-list/",
+          "date": "",
+          "period": "week"
+        }
+      ]
+    }
+  ]
+}

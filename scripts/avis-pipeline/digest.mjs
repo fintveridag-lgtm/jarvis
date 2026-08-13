@@ -22,9 +22,11 @@ const NTFY_URL = process.env.NTFY_URL || 'https://ntfy.sh';
 
 const VALID_TAGS = ['fakta', 'forskning', 'debatt', 'spekulasjon'];
 const PICKS_PER_SECTION = 4;
-const MAX_ITEMS_PROMPT = 14; // hvor mange saker vi viser modellen per seksjon
-const SNIPPET_IN_PROMPT = 160; // kutt utdrag i prompten så konteksten ikke sprenges
-const NUM_CTX = Number(process.env.OLLAMA_NUM_CTX) || 8192; // større kontekstvindu
+const MAX_ITEMS_PROMPT = 12; // hvor mange saker vi viser modellen per seksjon
+const SNIPPET_IN_PROMPT = 140; // kutt utdrag i prompten så konteksten holder seg liten
+// 0 = la Ollama bruke modellens egen standard (samme som "ollama run"). Å tvinge
+// et stort num_ctx kan få små modeller til å degenerere til søppel-utskrift.
+const NUM_CTX = Number(process.env.OLLAMA_NUM_CTX) || 0;
 
 function periodFromDate(date) {
   if (!date) return 'week';
@@ -60,13 +62,16 @@ async function ollamaPick(section) {
     )
     .join('\n');
 
+  const options = { temperature: 0.4 };
+  if (NUM_CTX > 0) options.num_ctx = NUM_CTX; // bare overstyr hvis satt eksplisitt
+
   const res = await fetch(`${OLLAMA_URL}/api/chat`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       model: OLLAMA_MODEL,
       stream: false,
-      options: { temperature: 0.2, num_ctx: NUM_CTX },
+      options,
       messages: [
         { role: 'system', content: SYSTEM },
         { role: 'user', content: `Seksjon: ${section.title}\n\nSaker:\n${list}` },

@@ -77,23 +77,52 @@ async function ollamaPick(section) {
     );
   }
   const data = await res.json();
+  const content = data.message?.content ?? '';
+  if (process.env.AVIS_DEBUG) {
+    console.log(`\n  [DEBUG ${section.id}] råsvar fra modellen:\n${content.slice(0, 600)}\n`);
+  }
   let parsed;
   try {
-    parsed = JSON.parse(data.message?.content ?? '{}');
+    parsed = JSON.parse(content || '{}');
   } catch {
+    if (process.env.AVIS_DEBUG) console.log('  [DEBUG] svaret var ikke gyldig JSON');
     return [];
   }
-  return Array.isArray(parsed.picks) ? parsed.picks : [];
+  // Godta både {"picks":[...]}, en naken liste, og vanlige alternative nøkler —
+  // små modeller følger ikke alltid skjemaet helt presist.
+  const arr = Array.isArray(parsed)
+    ? parsed
+    : parsed.picks || parsed.saker || parsed.valg || parsed.results || parsed.items || [];
+  return Array.isArray(arr) ? arr : [];
+}
+
+// Finn den ekte råsaken en "pick" peker på — via indeks, eller via tittel hvis
+// modellen droppet indeksen. Kilde/URL/dato tas ALLTID herfra, aldri fra modellen.
+function resolveRaw(section, p) {
+  const idx = p.index ?? p.i ?? p.id ?? p.nr ?? p.indeks;
+  if (idx !== undefined && idx !== null && section.items[Number(idx)]) {
+    return section.items[Number(idx)];
+  }
+  const t = String(p.title ?? p.tittel ?? p.overskrift ?? '').toLowerCase().trim();
+  if (t.length >= 6) {
+    return section.items.find((it) => {
+      const a = it.title.toLowerCase();
+      return a.includes(t.slice(0, 25)) || t.includes(a.slice(0, 25));
+    });
+  }
+  return null;
 }
 
 function buildItems(section, picks) {
   const out = [];
+  const used = new Set();
   for (const p of picks) {
-    const raw = section.items[p.index];
-    if (!raw) continue; // ugyldig indeks → hopp over
+    const raw = resolveRaw(section, p);
+    if (!raw || used.has(raw.url)) continue; // ugyldig/duplikat → hopp over
+    used.add(raw.url);
     out.push({
       title: raw.title,
-      summary: String(p.summary || raw.snippet || '').slice(0, 300),
+      summary: String(p.summary ?? p.sammendrag ?? raw.snippet ?? '').slice(0, 300),
       tag: VALID_TAGS.includes(p.tag) ? p.tag : 'debatt',
       source: raw.source, // alltid ekte
       url: raw.url, //        alltid ekte

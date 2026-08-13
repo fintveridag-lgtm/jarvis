@@ -65,7 +65,17 @@ async function ollamaPick(section) {
       ],
     }),
   });
-  if (!res.ok) throw new Error(`Ollama svarte ${res.status} — kjører den? (${OLLAMA_URL})`);
+  if (!res.ok) {
+    let detail = '';
+    try {
+      detail = (await res.text()).slice(0, 200);
+    } catch {}
+    throw new Error(
+      `Ollama svarte ${res.status}${detail ? ` — ${detail}` : ''} ` +
+        `(modell: "${OLLAMA_MODEL}", ${OLLAMA_URL}). ` +
+        `Sjekk "ollama list" og sett OLLAMA_MODEL i .env til et navn du har.`,
+    );
+  }
   const data = await res.json();
   let parsed;
   try {

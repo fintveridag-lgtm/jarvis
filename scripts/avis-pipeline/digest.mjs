@@ -22,6 +22,9 @@ const NTFY_URL = process.env.NTFY_URL || 'https://ntfy.sh';
 
 const VALID_TAGS = ['fakta', 'forskning', 'debatt', 'spekulasjon'];
 const PICKS_PER_SECTION = 4;
+const MAX_ITEMS_PROMPT = 14; // hvor mange saker vi viser modellen per seksjon
+const SNIPPET_IN_PROMPT = 160; // kutt utdrag i prompten så konteksten ikke sprenges
+const NUM_CTX = Number(process.env.OLLAMA_NUM_CTX) || 8192; // større kontekstvindu
 
 function periodFromDate(date) {
   if (!date) return 'week';
@@ -44,10 +47,14 @@ Vær ærlig med taggen. Ikke dikt opp innhold. Svar KUN med JSON på formen
 {"picks":[{"index":<tall>,"summary":"<norsk>","tag":"<tag>"}]}.`;
 
 async function ollamaPick(section) {
+  // Vis modellen bare de første N sakene, med korte utdrag — ellers sprenger vi
+  // kontekstvinduet og modellen svarer tomt. Indeksene 0..N-1 peker rett inn i
+  // section.items, så buildItems finner riktig råsak.
   const list = section.items
+    .slice(0, MAX_ITEMS_PROMPT)
     .map(
       (it, i) =>
-        `${i}. ${it.title} [kilde: ${it.source}, dato: ${it.date || 'ukjent'}] ${it.snippet || ''}`,
+        `${i}. ${it.title} [kilde: ${it.source}, dato: ${it.date || 'ukjent'}] ${(it.snippet || '').slice(0, SNIPPET_IN_PROMPT)}`,
     )
     .join('\n');
 
@@ -58,7 +65,7 @@ async function ollamaPick(section) {
       model: OLLAMA_MODEL,
       stream: false,
       format: 'json',
-      options: { temperature: 0.2 },
+      options: { temperature: 0.2, num_ctx: NUM_CTX },
       messages: [
         { role: 'system', content: SYSTEM },
         { role: 'user', content: `Seksjon: ${section.title}\n\nSaker:\n${list}` },
@@ -77,7 +84,7 @@ async function ollamaPick(section) {
     );
   }
   const data = await res.json();
-  const content = data.message?.content ?? '';
+  const content = data.message?.content ?? data.response ?? '';
   if (process.env.AVIS_DEBUG) {
     console.log(`\n  [DEBUG ${section.id}] råsvar fra modellen:\n${content.slice(0, 600)}\n`);
   }

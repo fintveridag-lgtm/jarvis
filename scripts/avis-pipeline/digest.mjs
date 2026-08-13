@@ -27,6 +27,9 @@ const SNIPPET_IN_PROMPT = 120; // kutt utdrag i prompten så konteksten holder s
 // 0 = la Ollama bruke modellens egen standard (samme som "ollama run"). Å tvinge
 // et stort num_ctx kan få små modeller til å degenerere til søppel-utskrift.
 const NUM_CTX = Number(process.env.OLLAMA_NUM_CTX) || 0;
+// Sett OLLAMA_NUM_GPU=0 for å tvinge Ollama til å kjøre på CPU (tregere, men
+// omgår en ustabil GPU/driver som spytter ut søppel som "@@@@").
+const NUM_GPU = process.env.OLLAMA_NUM_GPU;
 
 function periodFromDate(date) {
   if (!date) return 'week';
@@ -60,6 +63,7 @@ async function callOllama(section, list) {
   // loopen. num_ctx overstyres bare hvis satt eksplisitt i .env.
   const options = { temperature: 0.4, top_p: 0.9, repeat_penalty: 1.3 };
   if (NUM_CTX > 0) options.num_ctx = NUM_CTX;
+  if (NUM_GPU !== undefined && NUM_GPU !== '') options.num_gpu = Number(NUM_GPU);
 
   const res = await fetch(`${OLLAMA_URL}/api/chat`, {
     method: 'POST',

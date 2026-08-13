@@ -4,4 +4,5 @@ public/audio/*.mp3
 data/claude-data.json
 data/avis-data.json
 data/avis-raw.json
+data/*.log
 .DS_Store

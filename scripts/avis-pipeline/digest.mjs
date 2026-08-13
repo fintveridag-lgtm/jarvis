@@ -9,7 +9,7 @@
 // Kjør:  npm run avis:digest   (krever at Ollama kjører lokalt)
 
 import 'dotenv/config';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, appendFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const RAW = path.join(process.cwd(), 'data', 'avis-raw.json');
@@ -93,7 +93,18 @@ async function ollamaPick(section) {
   const arr = Array.isArray(parsed)
     ? parsed
     : parsed.picks || parsed.saker || parsed.valg || parsed.results || parsed.items || [];
-  return Array.isArray(arr) ? arr : [];
+  return { picks: Array.isArray(arr) ? arr : [], raw: content };
+}
+
+const DEBUG_LOG = path.join(process.cwd(), 'data', 'avis-digest-debug.log');
+
+// Skriv modellens råsvar til logg når en seksjon gir 0 treff, så vi kan se
+// nøyaktig hvilken form svaret hadde.
+async function logDebug(section, raw) {
+  const block = `\n[${new Date().toISOString()}] ${section.id} (0 treff) — råsvar:\n${String(raw).slice(0, 1200)}\n`;
+  try {
+    await appendFile(DEBUG_LOG, block, 'utf8');
+  } catch {}
 }
 
 // Finn den ekte råsaken en "pick" peker på — via indeks, eller via tittel hvis
@@ -165,7 +176,9 @@ async function main() {
     process.stdout.write(`• ${section.title} (${section.items.length} inn) … `);
     let items = [];
     try {
-      items = buildItems(section, await ollamaPick(section));
+      const { picks, raw: modelRaw } = await ollamaPick(section);
+      items = buildItems(section, picks);
+      if (items.length === 0) await logDebug(section, modelRaw);
     } catch (err) {
       console.log(`feil: ${err.message}`);
       throw err; // Ollama nede = stopp, ikke skriv halv avis

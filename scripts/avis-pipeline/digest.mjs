@@ -43,8 +43,10 @@ nøytralt norsk sammendrag (1-2 setninger) og sett en "tag":
 - "forskning": studie / fagfellevurdert / pågående forskning
 - "debatt": diskusjon, tolkning eller mening
 - "spekulasjon": påstand uten solid bevis (typisk UFO, "hemmelige funn" o.l.)
-Vær ærlig med taggen. Ikke dikt opp innhold. Svar KUN med JSON på formen
-{"picks":[{"index":<tall>,"summary":"<norsk>","tag":"<tag>"}]}.`;
+Vær ærlig med taggen. Ikke dikt opp innhold.
+Svar med KUN rå JSON — ingen forklaring, ingen markdown, ingen \`\`\`-gjerder.
+Start svaret med { og avslutt med }. Bruk nøyaktig denne formen:
+{"picks":[{"index":0,"summary":"<norsk sammendrag>","tag":"forskning"}]}`;
 
 async function ollamaPick(section) {
   // Vis modellen bare de første N sakene, med korte utdrag — ellers sprenger vi
@@ -64,7 +66,6 @@ async function ollamaPick(section) {
     body: JSON.stringify({
       model: OLLAMA_MODEL,
       stream: false,
-      format: 'json',
       options: { temperature: 0.2, num_ctx: NUM_CTX },
       messages: [
         { role: 'system', content: SYSTEM },
@@ -88,12 +89,10 @@ async function ollamaPick(section) {
   if (process.env.AVIS_DEBUG) {
     console.log(`\n  [DEBUG ${section.id}] råsvar fra modellen:\n${content.slice(0, 600)}\n`);
   }
-  let parsed;
-  try {
-    parsed = JSON.parse(content || '{}');
-  } catch {
-    if (process.env.AVIS_DEBUG) console.log('  [DEBUG] svaret var ikke gyldig JSON');
-    return [];
+  const parsed = extractJson(content);
+  if (!parsed) {
+    if (process.env.AVIS_DEBUG) console.log('  [DEBUG] fant ingen JSON i svaret');
+    return { picks: [], raw: content };
   }
   // Godta både {"picks":[...]}, en naken liste, og vanlige alternative nøkler —
   // små modeller følger ikke alltid skjemaet helt presist.
@@ -101,6 +100,32 @@ async function ollamaPick(section) {
     ? parsed
     : parsed.picks || parsed.saker || parsed.valg || parsed.results || parsed.items || [];
   return { picks: Array.isArray(arr) ? arr : [], raw: content };
+}
+
+// Plukk JSON ut av modellens tekst — tåler ```json-gjerder og forklarende prat
+// rundt selve JSON-en (vanlig når vi ikke tvinger format).
+function extractJson(text) {
+  let s = String(text).trim();
+  s = s.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+  try {
+    return JSON.parse(s);
+  } catch {}
+  const start = s.search(/[[{]/);
+  if (start === -1) return null;
+  const open = s[start];
+  const close = open === '{' ? '}' : ']';
+  let depth = 0;
+  for (let i = start; i < s.length; i++) {
+    if (s[i] === open) depth++;
+    else if (s[i] === close && --depth === 0) {
+      try {
+        return JSON.parse(s.slice(start, i + 1));
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null;
 }
 
 const DEBUG_LOG = path.join(process.cwd(), 'data', 'avis-digest-debug.log');

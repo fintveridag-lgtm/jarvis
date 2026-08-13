@@ -22,8 +22,8 @@ const NTFY_URL = process.env.NTFY_URL || 'https://ntfy.sh';
 
 const VALID_TAGS = ['fakta', 'forskning', 'debatt', 'spekulasjon'];
 const PICKS_PER_SECTION = 4;
-const MAX_ITEMS_PROMPT = 12; // hvor mange saker vi viser modellen per seksjon
-const SNIPPET_IN_PROMPT = 140; // kutt utdrag i prompten så konteksten holder seg liten
+const MAX_ITEMS_PROMPT = 10; // hvor mange saker vi viser modellen per seksjon
+const SNIPPET_IN_PROMPT = 120; // kutt utdrag i prompten så konteksten holder seg liten
 // 0 = la Ollama bruke modellens egen standard (samme som "ollama run"). Å tvinge
 // et stort num_ctx kan få små modeller til å degenerere til søppel-utskrift.
 const NUM_CTX = Number(process.env.OLLAMA_NUM_CTX) || 0;
@@ -48,20 +48,18 @@ Vær ærlig med taggen. Du skal IKKE skrive sammendrag — bare velge og merke.
 Svar med KUN rå JSON, ingen forklaring, ingen markdown. Nøyaktig denne formen:
 {"picks":[{"index":0,"tag":"forskning"}]}`;
 
-async function ollamaPick(section) {
-  // Vis modellen bare de første N sakene, med korte utdrag — ellers sprenger vi
-  // kontekstvinduet og modellen svarer tomt. Indeksene 0..N-1 peker rett inn i
-  // section.items, så buildItems finner riktig råsak.
-  const list = section.items
-    .slice(0, MAX_ITEMS_PROMPT)
-    .map(
-      (it, i) =>
-        `${i}. ${it.title} [kilde: ${it.source}, dato: ${it.date || 'ukjent'}] ${(it.snippet || '').slice(0, SNIPPET_IN_PROMPT)}`,
-    )
-    .join('\n');
+// "Degenerert" svar = modellen har hengt seg opp i å gjenta (nesten) bare ett
+// tegn, typisk "@@@@". Da er det ingen vits å prøve å lese JSON.
+function isDegenerate(raw) {
+  const s = String(raw).replace(/\s+/g, '');
+  return s.length >= 12 && new Set(s).size <= 2;
+}
 
-  const options = { temperature: 0.4 };
-  if (NUM_CTX > 0) options.num_ctx = NUM_CTX; // bare overstyr hvis satt eksplisitt
+async function callOllama(section, list) {
+  // repeat_penalty straffer å gjenta samme token — direkte motgift mot "@@@@"-
+  // loopen. num_ctx overstyres bare hvis satt eksplisitt i .env.
+  const options = { temperature: 0.4, top_p: 0.9, repeat_penalty: 1.3 };
+  if (NUM_CTX > 0) options.num_ctx = NUM_CTX;
 
   const res = await fetch(`${OLLAMA_URL}/api/chat`, {
     method: 'POST',
@@ -88,15 +86,36 @@ async function ollamaPick(section) {
     );
   }
   const data = await res.json();
-  const content = data.message?.content ?? data.response ?? '';
-  if (process.env.AVIS_DEBUG) {
-    console.log(`\n  [DEBUG ${section.id}] råsvar fra modellen:\n${content.slice(0, 600)}\n`);
+  return data.message?.content ?? data.response ?? '';
+}
+
+async function ollamaPick(section) {
+  // Vis modellen bare de første N sakene, med korte utdrag — mindre å tygge på =
+  // mindre minnepress og mindre sjanse for degenerasjon. Indeksene 0..N-1 peker
+  // rett inn i section.items, så buildItems finner riktig råsak.
+  const list = section.items
+    .slice(0, MAX_ITEMS_PROMPT)
+    .map(
+      (it, i) =>
+        `${i}. ${it.title} [kilde: ${it.source}, dato: ${it.date || 'ukjent'}] ${(it.snippet || '').slice(0, SNIPPET_IN_PROMPT)}`,
+    )
+    .join('\n');
+
+  // Prøv opptil 2 ganger: degenerert/tomt svar → nytt forsøk.
+  let content = '';
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    content = await callOllama(section, list);
+    if (process.env.AVIS_DEBUG) {
+      console.log(`\n  [DEBUG ${section.id} forsøk ${attempt}]:\n${content.slice(0, 400)}\n`);
+    }
+    if (isDegenerate(content)) continue; // søppel → prøv på nytt
+    const picks = parsePicks(content);
+    if (picks.length) return { picks, raw: content };
   }
-  const picks = parsePicks(content);
-  if (!picks.length && process.env.AVIS_DEBUG) {
-    console.log('  [DEBUG] fant ingen gyldige picks');
+  if (!parsePicks(content).length && process.env.AVIS_DEBUG) {
+    console.log('  [DEBUG] fant ingen gyldige picks etter 2 forsøk');
   }
-  return { picks, raw: content };
+  return { picks: parsePicks(content), raw: content };
 }
 
 // Hent picks ut av modellsvaret. Prøver ekte JSON først; faller tilbake til en

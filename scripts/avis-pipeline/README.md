@@ -59,25 +59,36 @@ den ikke kjører). Du trenger **ikke** restarte serveren etter en oppdatering �
    ```
 Da får du en push når `digest.mjs` er ferdig.
 
-## Kjør automatisk hver natt (Windows Oppgaveplanlegger)
+## Kjør automatisk hver natt (ett skript, én gang)
 
-Kjør denne **én gang** i PowerShell (bytt ut stien til prosjektmappa di):
+Kjør dette **én gang** i PowerShell, stående i prosjektmappa:
 
 ```powershell
-$proj = "C:\Sti\til\jarvis"
-schtasks /Create /TN "Jarvis Dagsavis" /SC DAILY /ST 02:00 /F `
-  /TR "cmd /c cd /d `"$proj`" && npm run avis:natt"
+.\scripts\avis-pipeline\setup-task.ps1
 ```
 
-Det lager en jobb som kjører kl. 02:00 hver natt. (PC-en må være på — sett
-gjerne på «vekk maskinen» i oppgavens egenskaper hvis du vil.) Node og npm må
-være i PATH — de er det hvis du kan kjøre `npm start` fra vanlig PowerShell.
+Det registrerer en Windows-oppgave som kjører kl. 02:00 hver natt (den vekker
+til og med PC-en om den sover). Vil du ha et annet tidspunkt:
 
-Vil du endre tid eller slette jobben:
 ```powershell
-schtasks /Change /TN "Jarvis Dagsavis" /ST 03:30
-schtasks /Delete /TN "Jarvis Dagsavis" /F
+.\scripts\avis-pipeline\setup-task.ps1 -Time 03:30
 ```
+
+Blir skriptet blokkert av «execution policy», start det slik i stedet:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\avis-pipeline\setup-task.ps1
+```
+
+Nyttige kommandoer etterpå:
+```powershell
+Start-ScheduledTask -TaskName 'Jarvis Dagsavis'          # test nå, uten å vente til natten
+Get-Content data\avis-natt.log -Tail 20                  # se hva som skjedde
+Unregister-ScheduledTask -TaskName 'Jarvis Dagsavis' -Confirm:$false   # fjern oppgaven
+```
+
+**Viktig:** Ollama må kjøre når oppgaven starter (den starter vanligvis med
+Windows og ligger i systemkurven). PC-en må være på eller i dvale (ikke helt
+avslått), siden alt kjører lokalt hos deg.
 
 ## Valgfritt: Claude-finpuss kl. 05:00
 

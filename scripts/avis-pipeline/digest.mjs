@@ -8,6 +8,7 @@
 //
 // Kjør:  npm run avis:digest   (krever at Ollama kjører lokalt)
 
+import 'dotenv/config';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
